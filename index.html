@@ -3,10 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>작로그 (JangLog) — 마작 대국 & 화료 역 기록기 (Supabase 클라우드 연동)</title>
+  <title>작로그 (JangLog) — 마작 대국 & 화료 역 기록기 (자동 아카이브 저장 포함)</title>
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-  <!-- Supabase JS SDK 추가 -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -53,7 +52,7 @@
             <h1 class="text-lg font-extrabold tracking-tight text-white">작로그 (JangLog)</h1>
             <span id="badge-game-mode" class="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">작혼식 반장전</span>
           </div>
-          <p class="text-xs text-slate-400">실시간 마작 대국 화료 역(Yaku) & 클라우드 실시간 연동 트래커</p>
+          <p class="text-xs text-slate-400">실시간 마작 대국 화료 역(Yaku) & 자동 아카이브 트래커</p>
         </div>
       </div>
 
@@ -68,6 +67,9 @@
         <button id="tab-btn-stats" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold transition text-slate-300 hover:text-white">
           역 분석 & 최종 정산
         </button>
+        <button id="tab-btn-archive" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold transition text-slate-300 hover:text-white">
+          📂 대국 아카이브
+        </button>
         <button id="tab-btn-monthly" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold transition text-slate-300 hover:text-white">
           월별 & 역대 기록
         </button>
@@ -75,9 +77,6 @@
 
       <!-- Action Buttons -->
       <div class="flex items-center gap-2">
-        <button id="btn-download-html" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-900/80 hover:bg-emerald-800 text-emerald-200 border border-emerald-600/50 transition flex items-center gap-1.5 shadow">
-          <span>📥 HTML 파일 저장</span>
-        </button>
         <button id="btn-open-settings" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition flex items-center gap-1.5">
           <span>⚙️ 룰/이름 설정</span>
         </button>
@@ -126,15 +125,13 @@
             ✨ 샘플 대국 불러오기
           </button>
           <button id="btn-reset-match" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-rose-950/70 hover:bg-rose-900/70 text-rose-200 border border-rose-700/50 transition">
-            🔄 새 대국 초기화
+            🔄 새 대국 초기화 (아카이브 저장)
           </button>
         </div>
       </div>
 
       <!-- Players Score Grid -->
-      <div id="player-cards-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
-        <!-- Populated dynamically via JS -->
-      </div>
+      <div id="player-cards-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4"></div>
 
       <!-- Live Score Trend Chart directly below scoreboard -->
       <div class="bg-slate-900/90 border border-emerald-800/80 rounded-xl p-3 sm:p-4 space-y-2">
@@ -150,10 +147,9 @@
       </div>
     </section>
 
-    <!-- TAB 1: 대국 & 화료 기록 (Record Win / Hand) -->
+    <!-- TAB 1: 대국 & 화료 기록 -->
     <section id="view-board" class="space-y-6">
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <!-- Left Column: Hand & Yaku Recorder Form -->
         <div class="lg:col-span-8 bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-lg space-y-6">
           <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-4">
             <div>
@@ -162,23 +158,15 @@
               </h2>
               <p class="text-xs text-slate-400 mt-0.5">토비 발생 시 즉시 종료 및 남4국 미달 시 서입(서국) 연장 룰 반영</p>
             </div>
-            <!-- Outcome Type Selector -->
             <div class="flex bg-slate-950 p-1 rounded-xl border border-slate-800">
-              <button type="button" data-outcome="ron" class="outcome-type-btn px-3.5 py-1.5 rounded-lg text-xs font-bold bg-rose-600 text-white shadow">
-                론 (Ron / 더블·트리플론)
-              </button>
-              <button type="button" data-outcome="tsumo" class="outcome-type-btn px-3.5 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white">
-                쯔모 (Tsumo)
-              </button>
-              <button type="button" data-outcome="draw" class="outcome-type-btn px-3.5 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white">
-                유국 (무승부)
-              </button>
+              <button type="button" data-outcome="ron" class="outcome-type-btn px-3.5 py-1.5 rounded-lg text-xs font-bold bg-rose-600 text-white shadow">론 (Ron)</button>
+              <button type="button" data-outcome="tsumo" class="outcome-type-btn px-3.5 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white">쯔모 (Tsumo)</button>
+              <button type="button" data-outcome="draw" class="outcome-type-btn px-3.5 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white">유국</button>
             </div>
           </div>
 
-          <!-- WIN FORM (Ron / Tsumo) -->
+          <!-- WIN FORM -->
           <div id="form-win-section" class="space-y-5">
-            <!-- Step 1: Winner & Loser Selection -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div class="bg-slate-950/60 p-3.5 rounded-xl border border-slate-800/80">
                 <div class="flex items-center justify-between mb-2">
@@ -194,85 +182,59 @@
               </div>
             </div>
 
-            <!-- Multi-Winner Config Tabs (더블론/트리플론 시 화료자별 개별 역 설정 탭) -->
             <div id="multi-winner-config-area" class="hidden bg-slate-950/80 p-3.5 rounded-xl border border-emerald-500/40 space-y-3">
               <div class="flex items-center justify-between">
                 <span class="text-xs font-bold text-emerald-300">🀄 화료자별 개별 패(역·후로·도라·부수) 설정</span>
-                <span class="text-[11px] text-slate-400">아래 탭을 눌러 각 플레이어의 패를 각각 설정하세요</span>
               </div>
               <div id="winner-config-tabs" class="flex flex-wrap gap-2"></div>
             </div>
 
-            <!-- Step 1.5: Furo (후로 / 울기) Status Toggle -->
             <div class="bg-slate-950/60 p-3.5 rounded-xl border border-slate-800/80 space-y-2">
               <div class="flex items-center justify-between">
-                <label class="text-xs font-semibold text-sky-300 flex items-center gap-1.5">
-                  <span>🀄 후로(울기) 상태 선택 [치·펑·메이드깡]</span>
-                </label>
-                <span id="furo-warning-badge" class="text-[10px] text-amber-300 hidden font-bold bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/35">⚠️ 울면 멘젠 한정 역(핑후, 멘젠쯔모 등)이 무효화됩니다</span>
+                <label class="text-xs font-semibold text-sky-300">🀄 후로(울기) 상태 선택</label>
+                <span id="furo-warning-badge" class="text-[10px] text-amber-300 hidden font-bold bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/35">⚠️ 울면 멘젠 한정 역 무효화</span>
               </div>
               <div class="grid grid-cols-2 gap-2">
-                <button type="button" id="btn-furo-false" class="py-2 rounded-lg text-xs font-bold border transition bg-emerald-600/30 border-emerald-400 text-white shadow">
-                  🔥 멘젠 (울지 않음 / 문전)
-                </button>
-                <button type="button" id="btn-furo-true" class="py-2 rounded-lg text-xs font-bold border transition bg-slate-900 border-slate-700 text-slate-400 hover:text-white">
-                  🀄 후로 함 (울었음 / 치·펑)
-                </button>
+                <button type="button" id="btn-furo-false" class="py-2 rounded-lg text-xs font-bold border transition bg-emerald-600/30 border-emerald-400 text-white shadow">🔥 멘젠 (문전)</button>
+                <button type="button" id="btn-furo-true" class="py-2 rounded-lg text-xs font-bold border transition bg-slate-900 border-slate-700 text-slate-400 hover:text-white">🀄 후로 (울었음)</button>
               </div>
             </div>
 
-            <!-- Step 2: Riichi declarations & Memo -->
             <div class="bg-slate-950/60 p-3.5 rounded-xl border border-slate-800/80 space-y-3">
-              <div class="flex flex-wrap items-center justify-between gap-3">
-                <div class="flex flex-wrap items-center gap-1.5 w-full">
-                  <span class="text-xs font-semibold text-rose-300 mr-2">🔥 이번 국 리치 선언자 (1,000점 공탁):</span>
-                  <div id="riichi-player-toggles" class="flex flex-wrap gap-2"></div>
-                </div>
+              <div class="flex flex-wrap items-center gap-1.5 w-full">
+                <span class="text-xs font-semibold text-rose-300 mr-2">🔥 이번 국 리치 선언자 (1,000점 공탁):</span>
+                <div id="riichi-player-toggles" class="flex flex-wrap gap-2"></div>
               </div>
-
               <div class="pt-2 border-t border-slate-800/80">
                 <label for="input-hand-memo" class="block text-xs text-slate-400 mb-1">결정패 / 한줄 메모 (선택)</label>
-                <input id="input-hand-memo" type="text" placeholder="예: 토비 발생, 서입 연장전 돌입, 역만 쯔모" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-emerald-500" />
+                <input id="input-hand-memo" type="text" placeholder="예: 토비 발생, 서입 연장전 돌입" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-emerald-500" />
               </div>
             </div>
 
-            <!-- Step 3: Yaku Selection Palette -->
             <div class="space-y-3">
               <div class="flex flex-wrap items-center justify-between gap-2">
                 <div class="flex items-center gap-2">
                   <label class="text-xs sm:text-sm font-bold text-amber-300" id="lbl-yaku-palette-title">🀄 성립한 역(Yaku) 선택</label>
                   <span id="selected-yaku-count-badge" class="text-xs px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 font-semibold">0개 선택됨</span>
                 </div>
-                <button type="button" id="btn-clear-yaku" class="text-xs text-slate-400 hover:text-rose-400 transition">
-                  역 선택 초기화
-                </button>
+                <button type="button" id="btn-clear-yaku" class="text-xs text-slate-400 hover:text-rose-400 transition">역 선택 초기화</button>
               </div>
-
-              <!-- Yaku Search Input -->
               <div class="relative">
-                <input id="input-yaku-search" type="text" placeholder="🔍 역 검색 (예: 리치, 탕야오, 중, 백, 발, 동, 더블 동...)" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500" />
+                <input id="input-yaku-search" type="text" placeholder="🔍 역 검색 (예: 리치, 탕야오, 백, 발, 중...)" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500" />
               </div>
-
-              <!-- Yaku Category Filter Pills -->
               <div class="flex flex-wrap gap-1.5" id="yaku-category-tabs">
                 <button type="button" data-ycat="all" class="ycat-btn px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-800 text-emerald-300 border border-emerald-500/40">전체 보기</button>
                 <button type="button" data-ycat="1han" class="ycat-btn px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-900 text-slate-400 border border-slate-800 hover:text-white">1판 역</button>
                 <button type="button" data-ycat="2han" class="ycat-btn px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-900 text-slate-400 border border-slate-800 hover:text-white">2판 역</button>
-                <button type="button" data-ycat="3_6han" class="ycat-btn px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-900 text-slate-400 border border-slate-800 hover:text-white">3~6판 (물수)</button>
+                <button type="button" data-ycat="3_6han" class="ycat-btn px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-900 text-slate-400 border border-slate-800 hover:text-white">3~6판</button>
                 <button type="button" data-ycat="yakuman" class="ycat-btn px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-900 text-amber-400 border border-slate-800 hover:text-amber-300">★ 역만</button>
               </div>
-
-              <!-- Yaku Buttons Grid -->
-              <div id="yaku-buttons-container" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 max-h-72 overflow-y-auto pr-1 custom-scrollbar">
-                <!-- Populated by JS -->
-              </div>
+              <div id="yaku-buttons-container" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 max-h-72 overflow-y-auto pr-1 custom-scrollbar"></div>
             </div>
 
-            <!-- Step 4: Dora & Fu & Score Calculation Preview -->
             <div class="grid grid-cols-1 md:grid-cols-12 gap-4 bg-slate-950/90 p-4 rounded-xl border border-slate-800">
-              <!-- Dora Counters -->
               <div class="md:col-span-5 space-y-2.5">
-                <div class="text-xs font-semibold text-slate-300">✨ 도라 (보너스 판수 — 역에는 미포함)</div>
+                <div class="text-xs font-semibold text-slate-300">✨ 도라 (보너스 판수)</div>
                 <div class="grid grid-cols-3 gap-2">
                   <div class="bg-slate-900 p-2 rounded-lg border border-slate-800 text-center">
                     <div class="text-[11px] text-slate-400 mb-1">도라</div>
@@ -299,13 +261,11 @@
                     </div>
                   </div>
                 </div>
-
-                <!-- Fu Selector -->
                 <div class="pt-1">
-                  <label for="select-fu" class="block text-[11px] text-slate-400 mb-1">부수 (Fu) — 울면 후로 부수 가산, 5판 이상은 부수 무관</label>
+                  <label for="select-fu" class="block text-[11px] text-slate-400 mb-1">부수 (Fu)</label>
                   <select id="select-fu" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-200">
-                    <option value="20">20부 (후로 기본형)</option>
-                    <option value="30" selected>30부 (일반적 부수)</option>
+                    <option value="20">20부</option>
+                    <option value="30" selected>30부</option>
                     <option value="40">40부</option>
                     <option value="50">50부</option>
                     <option value="60">60부</option>
@@ -314,218 +274,93 @@
                 </div>
               </div>
 
-              <!-- Live Score Summary Box -->
               <div class="md:col-span-7 bg-gradient-to-br from-slate-900 to-slate-950 p-3.5 rounded-xl border border-emerald-500/30 flex flex-col justify-between">
                 <div>
                   <div class="flex items-center justify-between mb-1">
-                    <span class="text-xs text-slate-400">자동 계산된 화료 타점 (본장 포함)</span>
+                    <span class="text-xs text-slate-400">자동 계산된 화료 타점</span>
                     <span id="preview-tier-badge" class="text-xs font-extrabold px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">역 미선택</span>
                   </div>
                   <div class="flex items-baseline gap-2">
                     <span id="preview-han-fu" class="text-lg font-extrabold text-white">0판 30부</span>
                     <span id="preview-base-points" class="text-xl sm:text-2xl font-black text-emerald-400">0점</span>
                   </div>
-                  <p id="preview-transfer-detail" class="text-xs text-slate-400 mt-1">성립한 역을 최소 1개 이상 선택해 주세요.</p>
-                </div>
-
-                <div class="mt-3 pt-2.5 border-t border-slate-800 flex flex-wrap items-center justify-between gap-2">
-                  <label class="flex items-center gap-1.5 text-xs text-slate-300 cursor-pointer">
-                    <input type="checkbox" id="chk-manual-score" class="rounded bg-slate-800 border-slate-600 text-emerald-500" />
-                    <span>점수 직접 입력(예외 규정)</span>
-                  </label>
-                  <div id="manual-score-box" class="hidden flex items-center gap-1.5">
-                    <input type="number" id="input-manual-score" step="100" value="8000" class="w-24 bg-slate-800 border border-slate-600 rounded px-2 py-1 text-xs text-white text-right" />
-                    <span class="text-xs text-slate-400">점</span>
-                  </div>
+                  <p id="preview-transfer-detail" class="text-xs text-slate-400 mt-1">성립한 역을 선택해 주세요.</p>
                 </div>
               </div>
             </div>
 
-            <!-- Submit Win Button -->
             <div class="flex items-center justify-end gap-3">
               <div id="win-validation-msg" class="text-xs text-rose-400 font-medium hidden"></div>
-              <button type="button" id="btn-submit-win" class="w-full sm:w-auto px-6 py-3 rounded-xl font-bold text-sm bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 shadow-lg shadow-emerald-950/50 transition">
-                ✅ 이 화료 기록 저장 & 다음 국 진행
-              </button>
+              <button type="button" id="btn-submit-win" class="w-full sm:w-auto px-6 py-3 rounded-xl font-bold text-sm bg-gradient-to-r from-emerald-500 to-teal-600 text-slate-950 shadow-lg transition">✅ 화료 기록 저장</button>
             </div>
           </div>
 
-          <!-- DRAW FORM (Ryuukyoku / 유국) -->
+          <!-- DRAW FORM -->
           <div id="form-draw-section" class="hidden space-y-5">
             <div class="bg-slate-950/60 p-4 rounded-xl border border-slate-800 space-y-4">
-              <div>
-                <h3 class="text-sm font-bold text-amber-300 mb-1">유국 시 텐파이(Tenpai) 플레이어 선택</h3>
-                <p class="text-xs text-slate-400">황패유국 시 텐파이한 플레이어를 선택하면 노텐 벌부(총 3,000점)가 자동 정산됩니다.</p>
-              </div>
+              <h3 class="text-sm font-bold text-amber-300 mb-1">유국 시 텐파이 플레이어 선택</h3>
               <div id="tenpai-player-toggles" class="grid grid-cols-2 sm:grid-cols-4 gap-2.5"></div>
-
-              <div class="pt-3 border-t border-slate-800">
-                <span class="block text-xs font-semibold text-slate-300 mb-2">이번 국 리치 선언자(공탁금 1,000점 적립):</span>
-                <div id="draw-riichi-toggles" class="flex flex-wrap gap-2"></div>
-              </div>
-
               <div>
                 <label for="input-draw-memo" class="block text-xs text-slate-400 mb-1">유국 사유 / 메모</label>
-                <input id="input-draw-memo" type="text" placeholder="예: 황패유국, 구종구패, 사풍연타" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-200" />
+                <input id="input-draw-memo" type="text" placeholder="예: 황패유국" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-200" />
               </div>
             </div>
-
             <div class="flex justify-end">
-              <button type="button" id="btn-submit-draw" class="px-6 py-2.5 rounded-xl font-bold text-sm bg-amber-500 hover:bg-amber-400 text-slate-950 transition">
-                ✅ 유국 기록 저장 & 다음 국 진행
-              </button>
+              <button type="button" id="btn-submit-draw" class="px-6 py-2.5 rounded-xl font-bold text-sm bg-amber-500 text-slate-950 transition">✅ 유국 기록 저장</button>
             </div>
           </div>
         </div>
 
-        <!-- Right Column: Recent Hand Feed & Quick Yaku Summary -->
         <div class="lg:col-span-4 space-y-5">
           <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-lg flex flex-col h-full max-h-[720px]">
             <div class="flex items-center justify-between mb-3 pb-2.5 border-b border-slate-800">
-              <h3 class="text-sm sm:text-base font-bold text-white flex items-center gap-1.5">
-                <span>📜 최근 화료 & 국 기록</span>
-              </h3>
+              <h3 class="text-sm sm:text-base font-bold text-white">📜 최근 화료 & 국 기록</h3>
               <span id="feed-count-badge" class="text-xs text-slate-400">0건</span>
             </div>
-
-            <div id="recent-hands-feed" class="flex-1 overflow-y-auto space-y-3 pr-1 custom-scrollbar">
-              <!-- Populated by JS -->
-            </div>
+            <div id="recent-hands-feed" class="flex-1 overflow-y-auto space-y-3 pr-1 custom-scrollbar"></div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- TAB 2: 국별 화료 타임라인 (Full Filterable History) -->
+    <!-- TAB 2: 국별 타임라인 -->
     <section id="view-history" class="hidden space-y-5">
       <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-lg space-y-4">
-        <div class="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h2 class="text-lg font-bold text-white">국별 화료 & 역 상세 타임라인</h2>
-            <p class="text-xs text-slate-400">대국 중 누가 어떤 역으로 어떻게 날았는지 필터링하여 살펴보세요.</p>
-          </div>
-          <div class="flex flex-wrap items-center gap-2">
-            <select id="filter-history-player" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-200">
-              <option value="all">모든 플레이어</option>
-            </select>
-            <select id="filter-history-type" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-200">
-              <option value="all">모든 결과 (론/쯔모/유국)</option>
-              <option value="ron">론 (Ron) 화료만</option>
-              <option value="tsumo">쯔모 (Tsumo) 화료만</option>
-              <option value="draw">유국만</option>
-            </select>
-          </div>
-        </div>
-
-        <div id="full-history-list" class="space-y-3">
-          <!-- Populated by JS -->
-        </div>
+        <h2 class="text-lg font-bold text-white">국별 화료 타임라인</h2>
+        <div id="full-history-list" class="space-y-3"></div>
       </div>
     </section>
 
-    <!-- TAB 3: 플레이어 역 분석 & 작혼식 최종 정산 (Analytics & Uma/Oka Final Calc) -->
+    <!-- TAB 3: 역 분석 & 최종 정산 -->
     <section id="view-stats" class="hidden space-y-6">
-      <!-- Majsoul Final Rank & Uma/Oka Summary Box -->
-      <div class="bg-gradient-to-r from-slate-900 via-slate-900 to-emerald-950 border border-emerald-500/40 rounded-2xl p-5 shadow-xl space-y-4">
-        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
+      <div class="bg-gradient-to-r from-slate-900 to-emerald-950 border border-emerald-500/40 rounded-2xl p-5 shadow-xl space-y-4">
+        <h3 class="text-base font-bold text-amber-300">🏆 작혼식 최종 정산 (우마 & 오카 포인트)</h3>
+        <div id="majsoul-final-ranking-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3"></div>
+      </div>
+      <div id="stats-player-cards" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+    </section>
+
+    <!-- TAB 4: 대국 아카이브 (Archive Tab) -->
+    <section id="view-archive" class="hidden space-y-6">
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-lg space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
           <div>
-            <h3 class="text-base font-bold text-amber-300 flex items-center gap-2">
-              <span>🏆 작혼식 최종 정산 (우마 & 오카 포인트)</span>
-            </h3>
-            <p class="text-xs text-slate-400 mt-0.5">시작 25,000점 / 반환 30,000점 / 우마 (+15, +5, -5, -15) 기준 최종 pt 정산</p>
-          </div>
-          <div class="text-xs text-slate-400 bg-slate-950 px-3 py-1.5 rounded-lg border border-slate-800">
-            정산 공식: <code class="text-emerald-300">((최종점수 - 30,000) / 1,000) + 우마</code>
+            <h2 class="text-lg font-bold text-white">📂 저장된 대국 아카이브</h2>
+            <p class="text-xs text-slate-400 mt-0.5">초기화했거나 종료된 이전 대국들의 최종 결과와 세부 기록을 모아봅니다.</p>
           </div>
         </div>
-        <div id="majsoul-final-ranking-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          <!-- Populated by JS -->
-        </div>
-      </div>
-
-      <!-- Player Breakdown Cards -->
-      <div id="stats-player-cards" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <!-- Populated by JS -->
-      </div>
-
-      <!-- Charts Row -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-lg">
-          <h3 class="text-sm font-bold text-white mb-1">📈 국별 점수 추이 그래프</h3>
-          <p class="text-xs text-slate-400 mb-3">대국 시작부터 각 국 종료 시점까지의 플레이어별 점수 변화</p>
-          <div class="relative h-72">
-            <canvas id="chart-score-trend"></canvas>
-          </div>
-        </div>
-
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-lg">
-          <h3 class="text-sm font-bold text-white mb-1">🏆 대국 최다 출현 역(Yaku) TOP 8</h3>
-          <p class="text-xs text-slate-400 mb-3">이번 대국에서 플레이어들이 화료할 때 가장 많이 사용한 역</p>
-          <div class="relative h-72">
-            <canvas id="chart-yaku-freq"></canvas>
-          </div>
+        <div id="archive-list-container" class="space-y-4">
+          <div class="text-center py-12 text-slate-500 text-xs">저장된 아카이브 대국이 없습니다.</div>
         </div>
       </div>
     </section>
 
-    <!-- TAB: 월별 & 역대 기록 (Monthly & All-time Records) -->
+    <!-- TAB 5: 월별 & 역대 기록 -->
     <section id="view-monthly" class="hidden space-y-6">
-      <!-- All-Time Records Overview Cards -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-lg space-y-1">
           <div class="text-xs text-slate-400">누적 기록된 국수</div>
           <div id="stat-all-hands" class="text-2xl font-black text-white">0회</div>
-          <div class="text-[11px] text-emerald-400">전체 화료 및 유국 기록</div>
-        </div>
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-lg space-y-1">
-          <div class="text-xs text-slate-400">역대 최고 화료 타점</div>
-          <div id="stat-max-gain" class="text-2xl font-black text-amber-400">0점</div>
-          <div id="stat-max-gain-desc" class="text-[11px] text-slate-400">기록 없음</div>
-        </div>
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-lg space-y-1">
-          <div class="text-xs text-slate-400">역대 최다 출현 역</div>
-          <div id="stat-top-yaku" class="text-xl font-black text-emerald-400">-</div>
-          <div id="stat-top-yaku-count" class="text-[11px] text-slate-400">총 0회 출현</div>
-        </div>
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-lg space-y-1">
-          <div class="text-xs text-slate-400">평균 화료 타점</div>
-          <div id="stat-avg-gain" class="text-2xl font-black text-sky-300">0점</div>
-          <div class="text-[11px] text-slate-400">전체 화료 기준 평균</div>
-        </div>
-      </div>
-
-      <!-- Majsoul Style Advanced Player Leaderboard Table -->
-      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-lg space-y-4">
-        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
-          <div>
-            <h3 class="text-base font-bold text-amber-300 flex items-center gap-2">
-              <span>📊 플레이어 상세 전적 리더보드 (화료율·방총률·연대율 등)</span>
-            </h3>
-            <p class="text-xs text-slate-400 mt-0.5">작혼 스타일의 1위율, 연대율, 라스회피율, 화료·방총 평균타점 등 세부 지표를 집계합니다.</p>
-          </div>
-        </div>
-
-        <div class="overflow-x-auto custom-scrollbar">
-          <table class="w-full text-left text-xs text-slate-300 whitespace-nowrap">
-            <thead class="bg-slate-950 text-slate-400 border-b border-slate-800">
-              <tr>
-                <th class="p-3 text-center">순위</th>
-                <th class="p-3">이름</th>
-                <th class="p-3 text-center">국수</th>
-                <th class="p-3 text-center text-amber-300">1위율</th>
-                <th class="p-3 text-center text-emerald-300">연대율</th>
-                <th class="p-3 text-center text-sky-300">라스회피율</th>
-                <th class="p-3 text-center text-emerald-400">화료율</th>
-                <th class="p-3 text-center text-rose-400">방총률</th>
-                <th class="p-3 text-right text-amber-400">화료 평균타점</th>
-                <th class="p-3 text-right text-rose-300">방총 평균타점</th>
-                <th class="p-3 text-right">최종 Pt</th>
-              </tr>
-            </thead>
-            <tbody id="leaderboard-table-body" class="divide-y divide-slate-800/80">
-              <!-- Populated by JS -->
-            </tbody>
-          </table>
         </div>
       </div>
     </section>
@@ -539,118 +374,58 @@
         <h3 class="text-base font-bold text-white">⚙️ 작혼 룰 및 플레이어 이름 설정</h3>
         <button type="button" id="btn-close-settings" class="text-slate-400 hover:text-white text-sm font-bold px-2 py-1">✕</button>
       </div>
-
       <div class="space-y-3">
         <div>
-          <label for="setting-game-mode" class="block text-xs font-semibold text-slate-300 mb-1">대국 모드 (시작 점수 25,000점 / 반환 30,000점)</label>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">대국 모드</label>
           <select id="setting-game-mode" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white">
-            <option value="4p_hanchan">4인 반장전 (동~남 8국, 오카·우마 적용)</option>
-            <option value="4p_tonpuu">4인 동풍전 (동 4국, 오카·우마 적용)</option>
-            <option value="3p_hanchan">3인 반장전 (삼마)</option>
+            <option value="4p_hanchan">4인 반장전</option>
+            <option value="4p_tonpuu">4인 동풍전</option>
           </select>
         </div>
-
-        <div>
-          <label for="setting-uma-profile" class="block text-xs font-semibold text-slate-300 mb-1">우마(Uma) 프로필 선택</label>
-          <select id="setting-uma-profile" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white">
-            <option value="majsoul_standard">작혼 옥탁/왕좌탁 표준 (+15, +5, -5, -15)</option>
-            <option value="majsoul_gold">작혼 금탁 표준 (+10, +5, -5, -10)</option>
-            <option value="m_league">M리그 방식 (+50, +10, -10, -30)</option>
-            <option value="flat">우마 없음 (순수 점수 환산)</option>
-          </select>
-        </div>
-
         <div class="space-y-2 pt-2">
-          <label class="block text-xs font-semibold text-slate-300">플레이어 이름 (시계 반대 방향 좌석 순서: 동-남-서-북)</label>
+          <label class="block text-xs font-semibold text-slate-300">플레이어 이름</label>
           <div class="grid grid-cols-2 gap-2">
-            <div>
-              <span class="text-[11px] text-amber-400">초기 동가 (오야)</span>
-              <input id="input-pname-0" type="text" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white" />
-            </div>
-            <div>
-              <span class="text-[11px] text-slate-400">초기 남가</span>
-              <input id="input-pname-1" type="text" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white" />
-            </div>
-            <div>
-              <span class="text-[11px] text-slate-400">초기 서가</span>
-              <input id="input-pname-2" type="text" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white" />
-            </div>
-            <div id="setting-p3-box">
-              <span class="text-[11px] text-slate-400">초기 북가</span>
-              <input id="input-pname-3" type="text" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white" />
-            </div>
+            <input id="input-pname-0" type="text" class="bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white" />
+            <input id="input-pname-1" type="text" class="bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white" />
+            <input id="input-pname-2" type="text" class="bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white" />
+            <input id="input-pname-3" type="text" class="bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white" />
           </div>
         </div>
       </div>
-
       <div class="flex justify-end gap-2 pt-3 border-t border-slate-800">
-        <button type="button" id="btn-cancel-settings" class="px-4 py-2 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700">취소</button>
-        <button type="button" id="btn-save-settings" class="px-4 py-2 rounded-lg text-xs font-bold bg-emerald-500 text-slate-950 hover:bg-emerald-400">저장 적용</button>
+        <button type="button" id="btn-cancel-settings" class="px-4 py-2 rounded-lg text-xs bg-slate-800 text-slate-300">취소</button>
+        <button type="button" id="btn-save-settings" class="px-4 py-2 rounded-lg text-xs font-bold bg-emerald-500 text-slate-950">저장</button>
       </div>
     </div>
   </div>
 
-  <!-- Toast Notification -->
   <div id="toast-container" class="fixed bottom-5 right-5 z-50 pointer-events-none transition-all duration-300 opacity-0 translate-y-2">
-    <div id="toast-msg" class="bg-emerald-600 text-white text-xs sm:text-sm font-semibold px-4 py-2.5 rounded-xl shadow-xl border border-emerald-400/40"></div>
+    <div id="toast-msg" class="bg-emerald-600 text-white text-xs sm:text-sm font-semibold px-4 py-2.5 rounded-xl shadow-xl"></div>
   </div>
 
   <script>
-    // --- Supabase 클라우드 연동 설정 ---
     const SUPABASE_URL = 'https://uoqgmjwkvuzltxpcsuyi.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVvcWdtandrdnV6bHR4cGNzdXlpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI4NTcwMjYsImV4cCI6MjEwODQzMzAyNn0.PvTXBj9wH-ktAQwTfUgsSzjI6a-dcCfQj0l77_sqDvs';
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    const ROOM_ID = 'my_majang_room'; // 모든 기기에서 공유할 방 코드
+    const ROOM_ID = 'my_majang_room';
 
     const YAKU_LIST = [
-      { id: 'riichi', name: '리치', han: 1, cat: '1han', desc: '텐파이 선언', keywords: ['리치'] },
-      { id: 'ippatsu', name: '일발', han: 1, cat: '1han', desc: '리치 후 1순 내 화료', keywords: ['일발'] },
-      { id: 'tsumo', name: '멘젠쯔모', han: 1, isMenzenOnly: true, cat: '1han', desc: '직접 쯔모 화료', keywords: ['쯔모', '멘젠쯔모'] },
-      { id: 'tanyao', name: '탕야오', han: 1, hanFuro: 1, cat: '1han', desc: '2~8 수패만으로 구성', keywords: ['탕야오'] },
-      { id: 'pinfu', name: '핑후 (평화)', han: 1, isMenzenOnly: true, cat: '1han', desc: '4순자+비역패 머리+양면대기 등', keywords: ['핑후', '평화'] },
-      { id: 'iipeiko', name: '이페코', han: 1, isMenzenOnly: true, cat: '1han', desc: '동일한 순자 2쌍', keywords: ['이페코'] },
-      { id: 'yakuhai_haku', name: '역패: 백(白)', han: 1, cat: '1han', desc: '삼원패 백 커쯔/깡쯔', keywords: ['백', '백(白)', '하쿠', '삼원패'] },
-      { id: 'yakuhai_hatsu', name: '역패: 발(發)', han: 1, cat: '1han', desc: '삼원패 발 커쯔/깡쯔', keywords: ['발', '발(發)', '하츠', '삼원패'] },
-      { id: 'yakuhai_chun', name: '역패: 중(中)', han: 1, cat: '1han', desc: '삼원패 중 커쯔/깡쯔', keywords: ['중', '중(中)', '춘', '삼원패'] },
-      { id: 'yakuhai_jikaze', name: '역패: 자풍패', han: 1, cat: '1han', desc: '내 자리 바람 커쯔', keywords: ['자풍패', '동', '남', '서', '북', '바람패'] },
-      { id: 'yakuhai_bakaze', name: '역패: 장풍패', han: 1, cat: '1han', desc: '현재 국 바람 커쯔', keywords: ['장풍패', '동', '남', '서', '북', '바람패'] },
-      { id: 'haitei', name: '해저로월/하저로어', han: 1, cat: '1han', desc: '마지막 패로 쯔모/론', keywords: ['해저', '하저'] },
-      { id: 'rinshan', name: '영상개화', han: 1, cat: '1han', desc: '깡 후 영상패로 쯔모', keywords: ['영상개화', '영상'] },
-      { id: 'chankan', name: '창깡', han: 1, cat: '1han', desc: '가깡 패를 론 화료', keywords: ['창깡'] },
-
-      { id: 'daburi', name: '더블 리치', han: 2, cat: '2han', desc: '첫 순에 리치 선언', keywords: ['더블 리치', '더블', '더블동', '더블 동', '더블남', '더블 남', '더블서', '더블 서', '더블북', '더블 북', '다부리'] },
-      { id: 'sanshoku', name: '삼색동순', han: 2, hanFuro: 1, cat: '2han', desc: '만/통/삭 같은 숫자 순자 (울면 1판)', keywords: ['삼색동순', '삼색'] },
-      { id: 'ittsu', name: '일기통관', han: 2, hanFuro: 1, cat: '2han', desc: '한 수패로 123·456·789 (울면 1판)', keywords: ['일기통관', '일통'] },
-      { id: 'chanta', name: '찬타', han: 2, hanFuro: 1, cat: '2han', desc: '모든 몸통/머리에 요구패 포함 (울면 1판)', keywords: ['찬타'] },
-      { id: 'chiitoitsu', name: '치또이츠', han: 2, isMenzenOnly: true, cat: '2han', desc: '서로 다른 또이츠 7개 (25부 고정)', keywords: ['치또이츠', '치또이'] },
-      { id: 'toitoi', name: '또이또이', han: 2, cat: '2han', desc: '4개의 몸통이 모두 커쯔', keywords: ['또이또이'] },
-      { id: 'sanankou', name: '삼암각', han: 2, isMenzenOnly: true, cat: '2han', desc: '암각 3개', keywords: ['삼암각'] },
-      { id: 'shousangen', name: '소삼원', han: 2, cat: '2han', desc: '삼원패 2커쯔 + 1머리', keywords: ['소삼원'] },
-      { id: 'honroutou', name: '혼노두', han: 2, cat: '2han', desc: '노두패(1,9)와 자패만으로 구성', keywords: ['혼노두'] },
-      { id: 'sanshokudoukou', name: '삼색동각', han: 2, cat: '2han', desc: '만/통/삭 같은 숫자 커쯔', keywords: ['삼색동각'] },
-
-      { id: 'honitsu', name: '혼일색', han: 3, hanFuro: 2, cat: '3_6han', desc: '한 종류 수패 + 자패 (울면 2판)', keywords: ['혼일색', '혼일'] },
-      { id: 'junchan', name: '준찬타', han: 3, hanFuro: 2, cat: '3_6han', desc: '모든 몸통/머리에 노두패(1,9) 포함 (울면 2판)', keywords: ['준찬타'] },
-      { id: 'ryanpeiko', name: '니페코', han: 3, isMenzenOnly: true, cat: '3_6han', desc: '이페코 2쌍', keywords: ['니페코'] },
-      { id: 'chinitsu', name: '청일색', han: 6, hanFuro: 5, cat: '3_6han', desc: '오직 한 종류의 수패만으로 구성 (울면 5판)', keywords: ['청일색', '청일'] },
-
-      { id: 'kokushi', name: '국사무쌍 (역만)', han: 13, isMenzenOnly: true, cat: 'yakuman', isYakuman: true, desc: '13종 요구패 각 1장 + 쌍', keywords: ['국사무쌍', '국사'] },
-      { id: 'suuankou', name: '사암각 (역만)', han: 13, isMenzenOnly: true, cat: 'yakuman', isYakuman: true, desc: '암각 4개 완성', keywords: ['사암각'] },
-      { id: 'daisangen', name: '대삼원 (역만)', han: 13, isMenzenOnly: true, cat: 'yakuman', isYakuman: true, desc: '백·발·중 모두 커쯔', keywords: ['대삼원'] },
-      { id: 'tsuuiisou', name: '자일색 (역만)', han: 13, isMenzenOnly: true, cat: 'yakuman', isYakuman: true, desc: '자패만으로 구성', keywords: ['자일색'] },
-      { id: 'shousuushii', name: '소사희/대사희 (역만)', han: 13, isMenzenOnly: true, cat: 'yakuman', isYakuman: true, desc: '풍패 4종 커쯔/머리', keywords: ['소사희', '대사희'] },
-      { id: 'chuuren', name: '구련보등 (역만)', han: 13, isMenzenOnly: true, cat: 'yakuman', isYakuman: true, desc: '청일색 1112345678999+1', keywords: ['구련보등', '구련'] }
+      { id: 'riichi', name: '리치', han: 1, cat: '1han', desc: '텐파이 선언' },
+      { id: 'ippatsu', name: '일발', han: 1, cat: '1han', desc: '리치 후 1순 내 화료' },
+      { id: 'tsumo', name: '멘젠쯔모', han: 1, isMenzenOnly: true, cat: '1han', desc: '직접 쯔모 화료' },
+      { id: 'tanyao', name: '탕야오', han: 1, hanFuro: 1, cat: '1han', desc: '2~8 수패만으로 구성' },
+      { id: 'pinfu', name: '핑후', han: 1, isMenzenOnly: true, cat: '1han', desc: '평화' },
+      { id: 'yakuhai_haku', name: '백(白)', han: 1, cat: '1han', desc: '삼원패 백' },
+      { id: 'yakuhai_hatsu', name: '발(發)', han: 1, cat: '1han', desc: '삼원패 발' },
+      { id: 'yakuhai_chun', name: '중(中)', han: 1, cat: '1han', desc: '삼원패 중' },
+      { id: 'daburi', name: '더블 리치', han: 2, cat: '2han', desc: '첫 순 리치' },
+      { id: 'honitsu', name: '혼일색', han: 3, hanFuro: 2, cat: '3_6han', desc: '혼일색' },
+      { id: 'chinitsu', name: '청일색', han: 6, hanFuro: 5, cat: '3_6han', desc: '청일색' },
+      { id: 'kokushi', name: '국사무쌍', han: 13, isMenzenOnly: true, cat: 'yakuman', isYakuman: true, desc: '역만' }
     ];
 
     const WIND_NAMES = ['동', '남', '서', '북', '백'];
     const PLAYER_COLORS = ['#10b981', '#38bdf8', '#f59e0b', '#f43f5e'];
-
-    const UMA_PROFILES = {
-      majsoul_standard: [15, 5, -5, -15],
-      majsoul_gold: [10, 5, -5, -10],
-      m_league: [50, 10, -10, -30],
-      flat: [0, 0, 0, 0]
-    };
 
     let state = {
       gameMode: '4p_hanchan',
@@ -667,20 +442,15 @@
       riichiPot: 0,
       isGameOver: false,
       history: [],
-      snapshots: [],
-
+      archives: [],
       activeTab: 'board',
       outcomeType: 'ron',
       winnerIds: [0],
       loserId: 1,
       riichiDeclared: [false, false, false, false],
       tenpaiDeclared: [false, false, false, false],
-      
-      winnerHandConfigs: {
-        0: { isFuro: false, selectedYaku: ['riichi', 'pinfu', 'tanyao'], dora: 1, aka: 0, ura: 0, fu: 30, manualScoreEnabled: false, manualScoreValue: 8000 }
-      },
+      winnerHandConfigs: { 0: { isFuro: false, selectedYaku: ['riichi', 'tanyao'], dora: 1, aka: 0, ura: 0, fu: 30, manualScoreEnabled: false, manualScoreValue: 8000 } },
       activeConfigWinnerId: 0,
-
       yakuCategoryFilter: 'all',
       yakuSearchQuery: ''
     };
@@ -689,28 +459,11 @@
     let scoreChartInstance = null;
     let yakuChartInstance = null;
 
-    function getPlayerCount() {
-      return state.gameMode.startsWith('3p') ? 3 : 4;
-    }
-
-    function getStartingScore() {
-      return state.gameMode.startsWith('3p') ? 35000 : 25000;
-    }
-
-    function getReturnScore() {
-      return state.gameMode.startsWith('3p') ? 35000 : 30000;
-    }
-
-    function getRoundLabel(roundWind, roundNum) {
-      const windStr = WIND_NAMES[roundWind] || '서';
-      return `${windStr} ${roundNum + 1}국`;
-    }
-
-    function getPlayerSeatWind(playerId) {
-      const pCount = getPlayerCount();
-      const offset = (playerId - (state.roundNum % pCount) + pCount) % pCount;
-      return WIND_NAMES[offset] || '동';
-    }
+    function getPlayerCount() { return 4; }
+    function getStartingScore() { return 25000; }
+    function getReturnScore() { return 30000; }
+    function getRoundLabel(w, n) { return `${WIND_NAMES[w] || '서'} ${n + 1}국`; }
+    function getPlayerSeatWind(id) { return WIND_NAMES[(id - (state.roundNum % 4) + 4) % 4] || '동'; }
 
     function showToast(msg) {
       const container = document.getElementById('toast-container');
@@ -724,7 +477,6 @@
       }, 2400);
     }
 
-    // --- Supabase 클라우드 동기화 함수 ---
     async function loadFromSupabase() {
       try {
         const { data, error } = await supabaseClient
@@ -732,1754 +484,209 @@
           .select('state_data')
           .eq('room_code', ROOM_ID)
           .single();
-
         if (data && data.state_data) {
           state = Object.assign(state, data.state_data);
+          if (!state.archives) state.archives = [];
           renderAll();
-          showToast('☁️ 클라우드에서 최신 기록을 불러왔습니다!');
+          showToast('☁️ 클라우드에서 데이터를 불러왔습니다!');
           return true;
         }
-      } catch (e) {
-        console.error('불러오기 실패:', e);
-      }
+      } catch (e) {}
       return false;
     }
 
     async function saveToSupabase() {
       try {
-        const { error } = await supabaseClient
-          .from('match_sessions')
-          .upsert({ 
-            room_code: ROOM_ID, 
-            state_data: state, 
-            updated_at: new Date() 
-          }, { onConflict: 'room_code' });
-
-        if (error) console.error('클라우드 저장 오류:', error);
-      } catch (e) {
-        console.error('클라우드 저장 실패:', e);
-      }
-    }
-
-    // 기존 저장/불러오기 함수 호환성 매핑
-    function saveToStorage() {
-      saveToSupabase();
+        await supabaseClient.from('match_sessions').upsert({ 
+          room_code: ROOM_ID, 
+          state_data: state, 
+          updated_at: new Date() 
+        }, { onConflict: 'room_code' });
+      } catch (e) {}
     }
 
     function ensureWinnerConfig(wid) {
       if (!state.winnerHandConfigs[wid]) {
-        state.winnerHandConfigs[wid] = {
-          isFuro: false,
-          selectedYaku: ['riichi', 'pinfu', 'tanyao'],
-          dora: 1,
-          aka: 0,
-          ura: 0,
-          fu: 30,
-          manualScoreEnabled: false,
-          manualScoreValue: 8000
-        };
+        state.winnerHandConfigs[wid] = { isFuro: false, selectedYaku: ['riichi', 'tanyao'], dora: 1, aka: 0, ura: 0, fu: 30, manualScoreEnabled: false, manualScoreValue: 8000 };
       }
     }
 
     function calculateMajsoulStandings() {
-      const pCount = getPlayerCount();
-      const activePlayers = state.players.slice(0, pCount);
-      const returnScore = getReturnScore();
-      const umaList = UMA_PROFILES[state.umaProfile] || UMA_PROFILES.majsoul_standard;
-
+      const activePlayers = state.players.slice(0, 4);
       const ranked = [...activePlayers].sort((a, b) => b.score - a.score);
-
-      const calculated = ranked.map((p, rankIdx) => {
-        const rawPt = (p.score - returnScore) / 1000;
-        const uma = umaList[rankIdx] || 0;
-        let finalPt = rawPt + uma;
-        finalPt = Math.round(finalPt * 10) / 10;
-
-        return {
-          ...p,
-          rank: rankIdx + 1,
-          rawPt: Math.round(rawPt * 10) / 10,
-          uma,
-          finalPt
-        };
-      });
-
-      return calculated;
+      const umaList = [15, 5, -5, -15];
+      return ranked.map((p, idx) => ({
+        ...p,
+        rank: idx + 1,
+        rawPt: Math.round(((p.score - 30000) / 1000) * 10) / 10,
+        uma: umaList[idx] || 0,
+        finalPt: Math.round((((p.score - 30000) / 1000) + (umaList[idx] || 0)) * 10) / 10
+      }));
     }
 
-    function calculateSingleHandScore(winnerId, config) {
-      const isDealer = (winnerId === (state.roundNum % getPlayerCount()));
-      const isFuro = config.isFuro;
-
+    function calculateSingleHandScore(wid, config) {
+      const isDealer = (wid === (state.roundNum % 4));
       const validYakuObjs = [];
-      const evaluatedYakuNames = [];
-
       (config.selectedYaku || []).forEach(id => {
-        const y = YAKU_LIST.find(item => item.id === id);
+        const y = YAKU_LIST.find(i => i.id === id);
         if (!y) return;
-        if (isFuro && y.isMenzenOnly) return;
-
-        let effectiveHan = y.han;
-        if (isFuro && y.hanFuro !== undefined) {
-          effectiveHan = y.hanFuro;
-        }
-
-        validYakuObjs.push({ ...y, effectiveHan });
-        evaluatedYakuNames.push(y.name + (effectiveHan < y.han ? `(${effectiveHan}판)` : ''));
+        if (config.isFuro && y.isMenzenOnly) return;
+        let han = config.isFuro && y.hanFuro !== undefined ? y.hanFuro : y.han;
+        validYakuObjs.push({ ...y, effectiveHan: han });
       });
 
-      const yakuHan = validYakuObjs.reduce((acc, y) => acc + y.effectiveHan, 0);
-      const hasYakuman = validYakuObjs.some(y => y.isYakuman);
-      const totalDora = (config.dora || 0) + (config.aka || 0) + (config.ura || 0);
-      const totalHan = hasYakuman ? 13 : (yakuHan + totalDora);
-
-      let fu = config.fu || 30;
-      if (validYakuObjs.some(y => y.id === 'chiitoitsu')) {
-        fu = 25;
-      }
-
-      if (validYakuObjs.length === 0) {
-        return {
-          valid: false,
-          validYaku: [],
-          evaluatedYakuNames: [],
-          yakuHan: 0,
-          totalDora,
-          totalHan: 0,
-          fu,
-          tierName: '역 없음 (화료 불가)',
-          baseHandScore: 0,
-          totalGain: 0,
-          detailText: '성립 가능한 유효 역을 최소 1개 이상 선택해 주세요.'
-        };
-      }
-
-      let basicPoints = 0;
-      let tierName = `${totalHan}판 ${fu}부`;
-
-      if (hasYakuman || totalHan >= 13) {
-        basicPoints = 8000;
-        tierName = hasYakuman ? '역만 (Yakuman)' : '헤아림 역만 (13판+)';
-      } else if (totalHan >= 11) {
-        basicPoints = 6000;
-        tierName = '삼배만 (11~12판)';
-      } else if (totalHan >= 8) {
-        basicPoints = 4000;
-        tierName = '배만 (8~10판)';
-      } else if (totalHan >= 6) {
-        basicPoints = 3000;
-        tierName = '하네만 (6~7판)';
-      } else if (totalHan === 5 || (totalHan === 4 && fu >= 40) || (totalHan === 3 && fu >= 70)) {
-        basicPoints = 2000;
-        tierName = '만관 (Mangan)';
-      } else if ((totalHan === 4 && fu === 30) || (totalHan === 3 && fu === 60)) {
-        basicPoints = 2000;
-        tierName = '절상만관 (Kiriage Mangan)';
-      } else {
-        basicPoints = fu * Math.pow(2, totalHan + 2);
-        if (basicPoints >= 2000) {
-          basicPoints = 2000;
-          tierName = '만관 (Mangan)';
-        }
-      }
-
-      const ceil100 = (n) => Math.ceil(n / 100) * 100;
-      let baseHandScore = 0;
-
-      if (config.manualScoreEnabled) {
-        baseHandScore = Math.max(1000, Number(config.manualScoreValue) || 8000);
-        tierName = '수동 입력 타점';
-      } else {
-        baseHandScore = isDealer ? ceil100(basicPoints * 6) : ceil100(basicPoints * 4);
-      }
-
-      let koPay = ceil100(basicPoints * 1);
-      let oyaPay = ceil100(basicPoints * 2);
-      if (isDealer) koPay = ceil100(basicPoints * 2);
+      const yakuHan = validYakuObjs.reduce((a, b) => a + b.effectiveHan, 0);
+      const totalHan = validYakuObjs.some(y => y.isYakuman) ? 13 : (yakuHan + (config.dora || 0) + (config.aka || 0) + (config.ura || 0));
+      let baseScore = config.manualScoreEnabled ? Number(config.manualScoreValue) || 8000 : (isDealer ? 12000 : 8000);
 
       return {
-        valid: true,
+        valid: validYakuObjs.length > 0,
         validYaku: validYakuObjs,
-        evaluatedYakuNames,
-        yakuHan,
-        totalDora,
         totalHan,
-        fu,
-        tierName,
-        baseHandScore,
-        koPay,
-        oyaPay,
-        isDealer,
-        isFuro
+        tierName: totalHan >= 13 ? '역만' : `${totalHan}판`,
+        baseHandScore: baseScore,
+        isDealer
       };
     }
 
     function calculateHandPreview() {
       const activeWid = state.activeConfigWinnerId ?? state.winnerIds[0] ?? 0;
       ensureWinnerConfig(activeWid);
-      const config = state.winnerHandConfigs[activeWid];
-      const singleCalc = calculateSingleHandScore(activeWid, config);
-
-      const honbaBonusTotal = state.honba * 300;
-      const currentHandRiichiCount = state.riichiDeclared.slice(0, getPlayerCount()).filter(Boolean).length;
-      const totalRiichiSticks = state.riichiPot + currentHandRiichiCount;
-      const winnerDeclaredRiichi = state.riichiDeclared[activeWid];
-      const effectiveRiichiSticks = winnerDeclaredRiichi ? Math.max(0, totalRiichiSticks - 1) : totalRiichiSticks;
-      const riichiBonus = effectiveRiichiSticks * 1000;
-
-      let previewTotalGain = 0;
-      let detailText = '';
-
-      if (state.outcomeType === 'ron') {
-        previewTotalGain = singleCalc.baseHandScore + honbaBonusTotal + riichiBonus;
-        detailText = `론 타점 ${singleCalc.baseHandScore.toLocaleString()}점` +
-          (honbaBonusTotal > 0 ? ` + 본장 ${honbaBonusTotal}점 (${state.honba}본장)` : '') +
-          (riichiBonus > 0 ? ` + 리치봉 ${riichiBonus.toLocaleString()}점` : '');
-      } else {
-        const eachHonba = 100 * state.honba;
-        const pCount = getPlayerCount();
-        let totalCollected = 0;
-        for (let i = 0; i < pCount; i++) {
-          if (i === activeWid) continue;
-          let share = config.manualScoreEnabled ? Math.round(singleCalc.baseHandScore / (pCount - 1)) : ((i === (state.roundNum % pCount)) ? singleCalc.oyaPay : singleCalc.koPay);
-          totalCollected += (share + eachHonba);
-        }
-        previewTotalGain = totalCollected + riichiBonus;
-        detailText = `쯔모 총 획득 ${previewTotalGain.toLocaleString()}점` +
-          (honbaBonusTotal > 0 ? ` (본장 300점씩 가산 포함)` : '') +
-          (riichiBonus > 0 ? ` + 리치봉 ${riichiBonus.toLocaleString()}점` : '');
-      }
-
-      return {
-        ...singleCalc,
-        totalGain: previewTotalGain,
-        detailText
-      };
+      const calc = calculateSingleHandScore(activeWid, state.winnerHandConfigs[activeWid]);
+      return { ...calc, totalGain: calc.baseHandScore + (state.honba * 300) };
     }
 
     function loadSampleMatch() {
-      state.gameMode = '4p_hanchan';
-      state.umaProfile = 'majsoul_standard';
-      state.players = [
-        { id: 0, name: '김작사', score: 34200 },
-        { id: 1, name: '이리치', score: 26800 },
-        { id: 2, name: '박멘젠', score: 21900 },
-        { id: 3, name: '최탕야오', score: 17100 }
-      ];
-      state.roundWind = 0;
-      state.roundNum = 3;
-      state.honba = 1;
-      state.riichiPot = 0;
-      state.isGameOver = false;
-      state.snapshots = [];
-      state.history = [
-        {
-          id: 'h1',
-          roundLabel: '동 1국',
-          honba: 1,
-          outcome: 'ron',
-          winnerHands: [
-            {
-              winnerId: 0,
-              isFuro: false,
-              yakuNames: ['리치', '일발', '핑후 (평화)', '탕야오'],
-              totalHan: 6,
-              fu: 30,
-              tierName: '하네만 (6~7판)',
-              baseHandScore: 18000,
-              totalGain: 18300
-            }
-          ],
-          loserId: 3,
-          memo: '1본장 선제 리치 후 일발 적5만 론!',
-          totalGain: 18300,
-          scoresAfter: [42300, 25000, 25000, 7700]
-        }
-      ];
-
-      saveToStorage();
+      state.players = [{ id: 0, name: '김작사', score: 34200 }, { id: 1, name: '이리치', score: 26800 }, { id: 2, name: '박멘젠', score: 21900 }, { id: 3, name: '최탕야오', score: 17100 }];
+      state.history = [{ roundLabel: '동 1국', honba: 0, outcome: 'ron', winnerHands: [{ winnerId: 0, tierName: '하네만', totalGain: 12000, yakuNames: ['리치'] }], loserId: 3, totalGain: 12000, scoresAfter: [37000, 26800, 21900, 14300] }];
+      saveToSupabase();
       renderAll();
-      showToast('✨ 작혼식 샘플 대국 기록이 로드되었습니다!');
+      showToast('✨ 샘플 대국이 로드되었습니다!');
     }
 
+    // 🔄 새 대국 초기화 시 기존 대국을 자동으로 아카이브에 백업
     function resetNewMatch() {
-      const pCount = getPlayerCount();
-      const startPts = getStartingScore();
-      state.players.forEach(p => { p.score = startPts; });
+      if (state.history.length > 0) {
+        const archiveItem = {
+          id: 'archive_' + Date.now(),
+          date: new Date().toLocaleDateString(),
+          standings: calculateMajsoulStandings(),
+          historyCount: state.history.length,
+          history: [...state.history]
+        };
+        if (!state.archives) state.archives = [];
+        state.archives.push(archiveItem);
+      }
+
+      state.players.forEach(p => p.score = 25000);
       state.roundWind = 0;
       state.roundNum = 0;
       state.honba = 0;
-      state.riichiPot = 0;
       state.isGameOver = false;
       state.history = [];
-      state.snapshots = [];
-      state.winnerIds = [0];
-      state.loserId = 1;
-      state.winnerHandConfigs = { 0: { isFuro: false, selectedYaku: ['riichi', 'pinfu', 'tanyao'], dora: 1, aka: 0, ura: 0, fu: 30, manualScoreEnabled: false, manualScoreValue: 8000 } };
-      state.activeConfigWinnerId = 0;
-      state.riichiDeclared = [false, false, false, false];
-      state.tenpaiDeclared = [false, false, false, false];
-      saveToStorage();
+      saveToSupabase();
       renderAll();
-      showToast('🔄 새 대국이 초기화되었습니다.');
+      showToast('🔄 새 대국이 시작되었으며, 이전 대국은 아카이브에 저장되었습니다!');
     }
 
+    function renderArchiveList() {
+      const container = document.getElementById('archive-list-container');
+      if (!state.archives || state.archives.length === 0) {
+        container.innerHTML = '<div class="text-center py-12 text-slate-500 text-xs">저장된 아카이브 대국이 없습니다.</div>';
+        return;
+      }
+      container.innerHTML = state.archives.map((arch, idx) => `
+        <div class="bg-slate-950 border border-slate-800 rounded-xl p-4 space-y-3">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+            <span class="text-xs font-bold text-amber-400">대국 #${idx + 1} (${arch.date}) — 총 ${arch.historyCount}국 진행</span>
+            <button onclick="deleteArchive('${arch.id}')" class="text-[11px] text-rose-400 hover:text-rose-300">삭제</button>
+          </div>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+            ${arch.standings.map(st => `
+              <div class="bg-slate-900 p-2 rounded border border-slate-800">
+                <div class="font-bold text-white">${st.rank}위: ${st.name}</div>
+                <div class="text-emerald-400">${st.score.toLocaleString()}점</div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    window.deleteArchive = function(id) {
+      state.archives = state.archives.filter(a => a.id !== id);
+      saveToSupabase();
+      renderArchiveList();
+      showToast('🗑️ 아카이브 항목이 삭제되었습니다.');
+    };
+
     function renderTopBoard() {
-      const pCount = getPlayerCount();
-      const modeLabels = {
-        '4p_hanchan': '작혼식 반장전',
-        '4p_tonpuu': '작혼식 동풍전',
-        '3p_hanchan': '3인 반장전 (삼마)'
-      };
-      document.getElementById('badge-game-mode').textContent = modeLabels[state.gameMode] || '작혼식 반장전';
-      document.getElementById('display-round-name').textContent = state.isGameOver ? '대국 종료 (정산완료)' : getRoundLabel(state.roundWind, state.roundNum % pCount);
+      document.getElementById('display-round-name').textContent = state.isGameOver ? '종료됨' : getRoundLabel(state.roundWind, state.roundNum % 4);
       document.getElementById('display-honba').textContent = `${state.honba}본장`;
-      document.getElementById('display-riichi-pot').textContent = state.riichiPot;
       document.getElementById('display-total-hands').textContent = state.history.length;
-
-      const dealerIdx = state.roundNum % pCount;
-      document.getElementById('display-dealer-name').textContent = state.isGameOver ? '-' : (state.players[dealerIdx]?.name || '-');
-      document.getElementById('btn-undo-last').disabled = state.snapshots.length === 0;
-
-      const activePlayers = state.players.slice(0, pCount);
-      const maxScore = Math.max(...activePlayers.map(p => p.score));
-      const sortedIds = [...activePlayers].sort((a, b) => b.score - a.score).map(p => p.id);
+      document.getElementById('display-dealer-name').textContent = state.players[state.roundNum % 4]?.name || '-';
 
       const grid = document.getElementById('player-cards-grid');
-      grid.className = `grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-${pCount} gap-3`;
-      grid.innerHTML = '';
-
-      activePlayers.forEach((p, idx) => {
-        const isDealer = idx === dealerIdx;
-        const seatWind = getPlayerSeatWind(idx);
-        const rank = sortedIds.indexOf(p.id) + 1;
-        const diff = p.score - maxScore;
-        const winCount = state.history.filter(h => h.outcome !== 'draw' && (h.winnerHands || []).some(wh => wh.winnerId === p.id)).length;
-        const dealInCount = state.history.filter(h => h.outcome === 'ron' && h.loserId === p.id).length;
-
-        const card = document.createElement('div');
-        card.className = `rounded-xl p-3.5 border transition ${
-          isDealer && !state.isGameOver
-            ? 'bg-slate-900/95 border-amber-500/60 shadow-lg shadow-amber-950/30'
-            : 'bg-slate-900/80 border-slate-700/80'
-        }`;
-
-        card.innerHTML = `
-          <div class="flex items-center justify-between mb-1.5">
-            <div class="flex items-center gap-2">
-              <span class="w-6 h-6 rounded-lg flex items-center justify-center text-xs font-extrabold ${
-                isDealer && !state.isGameOver ? 'bg-amber-500 text-slate-950' : 'bg-slate-800 text-slate-300'
-              }">${seatWind}</span>
-              <span class="font-bold text-sm text-white truncate">${p.name}</span>
-              ${isDealer && !state.isGameOver ? '<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">오야(친)</span>' : ''}
-            </div>
-            <span class="text-xs font-bold ${rank === 1 ? 'text-emerald-400' : 'text-slate-400'}">${rank}위</span>
+      grid.innerHTML = state.players.map((p, idx) => `
+        <div class="rounded-xl p-3.5 border bg-slate-900/90 border-slate-700">
+          <div class="flex justify-between text-xs mb-1">
+            <span class="font-bold text-white">${getPlayerSeatWind(idx)} | ${p.name}</span>
+            <span class="text-emerald-400">${p.score.toLocaleString()}점</span>
           </div>
-          <div class="flex items-baseline justify-between">
-            <span class="text-xl sm:text-2xl font-black tracking-tight ${p.score < 0 ? 'text-rose-400' : 'text-white'}">
-              ${p.score.toLocaleString()}<span class="text-xs font-normal text-slate-400 ml-0.5">점</span>
-            </span>
-            <span class="text-[11px] text-slate-400">${diff === 0 ? '선두' : `${diff.toLocaleString()}점`}</span>
-          </div>
-          <div class="mt-2 pt-2 border-t border-slate-800/90 flex items-center justify-between text-[11px] text-slate-400">
-            <span>화료 <strong class="text-emerald-300">${winCount}</strong>회</span>
-            <span>방총 <strong class="text-rose-400">${dealInCount}</strong>회</span>
-          </div>
-        `;
-        grid.appendChild(card);
-      });
+        </div>
+      `).join('');
     }
 
     function renderRecorderForm() {
-      const pCount = getPlayerCount();
-      const activePlayers = state.players.slice(0, pCount);
-
-      if (state.isGameOver) {
-        document.getElementById('form-win-section').innerHTML = `
-          <div class="text-center py-12 text-amber-400 space-y-2 bg-slate-950/80 rounded-xl border border-amber-500/30">
-            <div class="text-3xl">🏆</div>
-            <p class="font-bold text-sm">토비 발생 혹은 조건 충족으로 대국이 종료되었습니다!</p>
-            <p class="text-xs text-slate-400">상단의 [역 분석 & 최종 정산] 탭에서 최종 Pt 순위를 확인하세요.</p>
-          </div>
-        `;
-        document.getElementById('form-draw-section').classList.add('hidden');
-        return;
-      }
-
-      if (!Array.isArray(state.winnerIds)) state.winnerIds = [0];
-      state.winnerIds = state.winnerIds.filter(id => id < pCount);
-      if (state.winnerIds.length === 0) state.winnerIds = [0];
-
-      if (!state.winnerIds.includes(state.activeConfigWinnerId)) {
-        state.activeConfigWinnerId = state.winnerIds[0];
-      }
-      ensureWinnerConfig(state.activeConfigWinnerId);
-
-      if (state.loserId >= pCount || state.winnerIds.includes(state.loserId)) {
-        const available = activePlayers.find(p => !state.winnerIds.includes(p.id));
-        state.loserId = available ? available.id : (state.winnerIds[0] + 1) % pCount;
-      }
-
-      document.querySelectorAll('.outcome-type-btn').forEach(btn => {
-        const type = btn.getAttribute('data-outcome');
-        if (type === state.outcomeType) {
-          btn.className = 'outcome-type-btn px-3.5 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 text-white shadow';
-        } else {
-          btn.className = 'outcome-type-btn px-3.5 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white';
-        }
-      });
-
-      const winSection = document.getElementById('form-win-section');
-      const drawSection = document.getElementById('form-draw-section');
-      const loserContainer = document.getElementById('loser-select-container');
-      const ronModeDesc = document.getElementById('lbl-ron-mode-desc');
-      const multiArea = document.getElementById('multi-winner-config-area');
-      const configTabsContainer = document.getElementById('winner-config-tabs');
-
-      if (state.outcomeType === 'draw') {
-        winSection.classList.add('hidden');
-        drawSection.classList.remove('hidden');
-      } else {
-        winSection.classList.remove('hidden');
-        drawSection.classList.add('hidden');
-        if (state.outcomeType === 'ron') {
-          loserContainer.classList.remove('opacity-40', 'pointer-events-none');
-          if (state.winnerIds.length > 1) {
-            ronModeDesc.textContent = state.winnerIds.length === 2 ? '🔥 더블론 (Double Ron)' : '⚡ 트리플론 (Triple Ron)';
-            ronModeDesc.className = 'text-[10px] text-rose-300 font-bold bg-rose-500/20 px-2 py-0.5 rounded border border-rose-500/40';
-            multiArea.classList.remove('hidden');
-
-            configTabsContainer.innerHTML = '';
-            state.winnerIds.forEach(wid => {
-              const pObj = state.players.find(p => p.id === wid);
-              const isActive = state.activeConfigWinnerId === wid;
-              const b = document.createElement('button');
-              b.type = 'button';
-              b.className = `px-3 py-1.5 rounded-lg text-xs font-bold border transition flex items-center gap-1.5 ${
-                isActive
-                  ? 'bg-emerald-600 border-emerald-400 text-white shadow'
-                  : 'bg-slate-900 border-slate-700 text-slate-400 hover:text-white'
-              }`;
-              b.innerHTML = `<span>🎯 ${pObj?.name || '플레이어'} 패 설정</span>`;
-              b.addEventListener('click', () => {
-                state.activeConfigWinnerId = wid;
-                renderRecorderForm();
-              });
-              configTabsContainer.appendChild(b);
-            });
-
-            document.getElementById('lbl-yaku-palette-title').textContent = `🀄 [${state.players.find(p => p.id === state.activeConfigWinnerId)?.name}]의 성립 역 선택`;
-          } else {
-            ronModeDesc.textContent = '단독 론';
-            ronModeDesc.className = 'text-[10px] text-amber-300 font-bold bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/30';
-            multiArea.classList.add('hidden');
-            document.getElementById('lbl-yaku-palette-title').textContent = '🀄 성립한 역(Yaku) 선택';
-          }
-        } else {
-          loserContainer.classList.add('opacity-40', 'pointer-events-none');
-          ronModeDesc.textContent = '단독 쯔모';
-          ronModeDesc.className = 'text-[10px] text-sky-300 font-bold bg-sky-500/10 px-2 py-0.5 rounded border border-sky-500/30';
-          multiArea.classList.add('hidden');
-          document.getElementById('lbl-yaku-palette-title').textContent = '🀄 성립한 역(Yaku) 선택';
-        }
-      }
-
       const winnerBox = document.getElementById('winner-select-buttons');
-      winnerBox.innerHTML = '';
-      activePlayers.forEach(p => {
-        const isSelected = state.winnerIds.includes(p.id);
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = `px-3 py-2 rounded-lg text-xs font-bold border text-left flex items-center justify-between transition ${
-          isSelected
-            ? 'bg-emerald-600/30 border-emerald-400 text-white shadow'
-            : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white'
-        }`;
-        btn.innerHTML = `<span>${p.name}</span><span class="text-[10px] ${isSelected ? 'text-emerald-300' : 'opacity-75'}">${getPlayerSeatWind(p.id)} ${isSelected ? '✓' : ''}</span>`;
-        btn.addEventListener('click', () => {
-          if (state.outcomeType === 'tsumo') {
-            state.winnerIds = [p.id];
-            state.activeConfigWinnerId = p.id;
-          } else {
-            if (isSelected) {
-              if (state.winnerIds.length > 1) {
-                state.winnerIds = state.winnerIds.filter(id => id !== p.id);
-                if (state.activeConfigWinnerId === p.id) {
-                  state.activeConfigWinnerId = state.winnerIds[0];
-                }
-              }
-            } else {
-              if (state.winnerIds.length < 3) {
-                state.winnerIds.push(p.id);
-                ensureWinnerConfig(p.id);
-              } else {
-                showToast('최대 3명(트리플론)까지 선택할 수 있습니다.');
-              }
-            }
-            if (state.winnerIds.includes(state.loserId)) {
-              const available = activePlayers.find(x => !state.winnerIds.includes(x.id));
-              if (available) state.loserId = available.id;
-            }
-          }
-          renderRecorderForm();
-        });
-        winnerBox.appendChild(btn);
-      });
+      winnerBox.innerHTML = state.players.map(p => `
+        <button type="button" onclick="toggleWinner(${p.id})" class="px-3 py-2 rounded-lg text-xs font-bold border ${state.winnerIds.includes(p.id) ? 'bg-emerald-600 text-white' : 'bg-slate-900 text-slate-400'}">${p.name}</button>
+      `).join('');
 
       const loserBox = document.getElementById('loser-select-buttons');
-      loserBox.innerHTML = '';
-      activePlayers.forEach(p => {
-        const isWinner = state.winnerIds.includes(p.id);
-        const selected = state.loserId === p.id && !isWinner;
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.disabled = isWinner;
-        btn.className = `px-3 py-2 rounded-lg text-xs font-bold border text-left flex items-center justify-between transition ${
-          isWinner
-            ? 'bg-slate-950 border-slate-900 text-slate-600 cursor-not-allowed'
-            : selected
-              ? 'bg-rose-600/30 border-rose-400 text-white shadow'
-              : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white'
-        }`;
-        btn.innerHTML = `<span>${p.name}</span><span class="text-[10px] opacity-75">${isWinner ? '화료자' : '방총'}</span>`;
-        btn.addEventListener('click', () => {
-          if (!isWinner) {
-            state.loserId = p.id;
-            renderRecorderForm();
-          }
-        });
-        loserBox.appendChild(btn);
-      });
+      loserBox.innerHTML = state.players.map(p => `
+        <button type="button" onclick="setLoser(${p.id})" class="px-3 py-2 rounded-lg text-xs font-bold border ${state.loserId === p.id ? 'bg-rose-600 text-white' : 'bg-slate-900 text-slate-400'}">${p.name}</button>
+      `).join('');
+    }
 
-      const activeWid = state.activeConfigWinnerId ?? state.winnerIds[0];
-      ensureWinnerConfig(activeWid);
-      const activeConfig = state.winnerHandConfigs[activeWid];
-
-      const btnFuroFalse = document.getElementById('btn-furo-false');
-      const btnFuroTrue = document.getElementById('btn-furo-true');
-      const furoWarning = document.getElementById('furo-warning-badge');
-
-      if (activeConfig.isFuro) {
-        btnFuroFalse.className = 'py-2 rounded-lg text-xs font-bold border transition bg-slate-900 border-slate-700 text-slate-400 hover:text-white';
-        btnFuroTrue.className = 'py-2 rounded-lg text-xs font-bold border transition bg-amber-600/30 border-amber-400 text-white shadow';
-        furoWarning.classList.remove('hidden');
+    window.toggleWinner = function(id) {
+      if (state.winnerIds.includes(id)) {
+        if (state.winnerIds.length > 1) state.winnerIds = state.winnerIds.filter(i => i !== id);
       } else {
-        btnFuroFalse.className = 'py-2 rounded-lg text-xs font-bold border transition bg-emerald-600/30 border-emerald-400 text-white shadow';
-        btnFuroTrue.className = 'py-2 rounded-lg text-xs font-bold border transition bg-slate-900 border-slate-700 text-slate-400 hover:text-white';
-        furoWarning.classList.add('hidden');
+        state.winnerIds.push(id);
       }
-
-      btnFuroFalse.onclick = () => {
-        activeConfig.isFuro = false;
-        renderRecorderForm();
-      };
-      btnFuroTrue.onclick = () => {
-        activeConfig.isFuro = true;
-        renderRecorderForm();
-      };
-
-      const riichiBox = document.getElementById('riichi-player-toggles');
-      const drawRiichiBox = document.getElementById('draw-riichi-toggles');
-      riichiBox.innerHTML = '';
-      drawRiichiBox.innerHTML = '';
-
-      activePlayers.forEach(p => {
-        const active = state.riichiDeclared[p.id];
-        const createBtn = () => {
-          const b = document.createElement('button');
-          b.type = 'button';
-          b.className = `px-3 py-1.5 rounded-lg text-xs font-bold border transition flex items-center gap-1.5 ${
-            active
-              ? 'bg-rose-600/30 border-rose-400 text-rose-200 shadow'
-              : 'bg-slate-900 border-slate-700 text-slate-400 hover:text-white'
-          }`;
-          b.innerHTML = `<span>${p.name}</span><span class="${active ? 'text-rose-300' : 'text-slate-500'}">${active ? '🔥 리치ON' : '리치 OFF'}</span>`;
-          b.addEventListener('click', () => {
-            state.riichiDeclared[p.id] = !state.riichiDeclared[p.id];
-            if (state.winnerIds.includes(p.id) && state.riichiDeclared[p.id]) {
-              ensureWinnerConfig(activeWid);
-              if (!state.winnerHandConfigs[activeWid].selectedYaku.includes('riichi')) {
-                state.winnerHandConfigs[activeWid].selectedYaku.push('riichi');
-              }
-            }
-            renderRecorderForm();
-          });
-          return b;
-        };
-        riichiBox.appendChild(createBtn());
-        drawRiichiBox.appendChild(createBtn());
-      });
-
-      const tenpaiBox = document.getElementById('tenpai-player-toggles');
-      tenpaiBox.innerHTML = '';
-      activePlayers.forEach(p => {
-        const isTenpai = state.tenpaiDeclared[p.id];
-        const b = document.createElement('button');
-        b.type = 'button';
-        b.className = `p-2.5 rounded-xl text-xs font-bold border transition flex items-center justify-between ${
-          isTenpai
-            ? 'bg-amber-500/25 border-amber-400 text-amber-200'
-            : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white'
-        }`;
-        b.innerHTML = `<span>${p.name}</span><span>${isTenpai ? '텐파이 ⭕' : '노텐 ✕'}</span>`;
-        b.addEventListener('click', () => {
-          state.tenpaiDeclared[p.id] = !state.tenpaiDeclared[p.id];
-          renderRecorderForm();
-        });
-        tenpaiBox.appendChild(b);
-      });
-
-      document.querySelectorAll('.ycat-btn').forEach(btn => {
-        const cat = btn.getAttribute('data-ycat');
-        if (cat === state.yakuCategoryFilter) {
-          btn.className = 'ycat-btn px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-600/30 text-emerald-300 border border-emerald-500/50';
-        } else {
-          btn.className = 'ycat-btn px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-900 text-slate-400 border border-slate-800 hover:text-white';
-        }
-      });
-
-      const yakuGrid = document.getElementById('yaku-buttons-container');
-      yakuGrid.innerHTML = '';
-
-      const searchQuery = (state.yakuSearchQuery || '').trim().toLowerCase();
-      const filteredYaku = YAKU_LIST.filter(y => {
-        if (state.yakuCategoryFilter !== 'all' && y.cat !== state.yakuCategoryFilter) return false;
-        if (!searchQuery) return true;
-        const nameMatch = y.name.toLowerCase().includes(searchQuery);
-        const descMatch = y.desc.toLowerCase().includes(searchQuery);
-        const kwMatch = y.keywords && y.keywords.some(kw => kw.toLowerCase().includes(searchQuery));
-        return nameMatch || descMatch || kwMatch;
-      });
-
-      filteredYaku.forEach(y => {
-        const isSelected = activeConfig.selectedYaku.includes(y.id);
-        const isInvalidDueToFuro = activeConfig.isFuro && y.isMenzenOnly;
-
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.disabled = isInvalidDueToFuro;
-        btn.className = `yaku-chip p-2.5 rounded-xl border text-left flex flex-col justify-between transition ${
-          isInvalidDueToFuro
-            ? 'bg-slate-950/40 border-slate-900 text-slate-600 cursor-not-allowed opacity-40'
-            : isSelected
-              ? y.isYakuman
-                ? 'bg-amber-500/25 border-amber-400 text-amber-100 shadow-md shadow-amber-950/40'
-                : 'bg-emerald-600/25 border-emerald-400 text-white shadow-md shadow-emerald-950/40'
-              : 'bg-slate-950/80 border-slate-800 text-slate-300 hover:border-slate-600'
-        }`;
-
-        let hanBadgeText = y.isYakuman ? '역만' : `${y.han}판`;
-        if (activeConfig.isFuro && y.hanFuro !== undefined) {
-          hanBadgeText = `울면 ${y.hanFuro}판`;
-        }
-
-        btn.innerHTML = `
-          <div class="flex items-center justify-between gap-1 w-full">
-            <span class="text-xs font-bold truncate">${y.name} ${isInvalidDueToFuro ? '(멘젠한정)' : ''}</span>
-            <span class="text-[10px] font-extrabold px-1.5 py-0.5 rounded ${
-              isSelected
-                ? 'bg-emerald-400 text-slate-950'
-                : y.isYakuman
-                  ? 'bg-amber-500/20 text-amber-300'
-                  : 'bg-slate-800 text-slate-400'
-            }">${hanBadgeText}</span>
-          </div>
-          <div class="text-[10px] text-slate-400 mt-1 truncate">${y.desc}</div>
-        `;
-        btn.addEventListener('click', () => {
-          if (activeConfig.selectedYaku.includes(y.id)) {
-            activeConfig.selectedYaku = activeConfig.selectedYaku.filter(id => id !== y.id);
-          } else {
-            activeConfig.selectedYaku.push(y.id);
-            if (y.id === 'riichi' || y.id === 'daburi') {
-              state.riichiDeclared[activeWid] = true;
-            }
-          }
-          renderRecorderForm();
-        });
-        yakuGrid.appendChild(btn);
-      });
-
-      document.getElementById('val-dora').textContent = activeConfig.dora;
-      document.getElementById('val-aka').textContent = activeConfig.aka;
-      document.getElementById('val-ura').textContent = activeConfig.ura;
-      document.getElementById('select-fu').value = String(activeConfig.fu);
-      document.getElementById('chk-manual-score').checked = activeConfig.manualScoreEnabled;
-      document.getElementById('manual-score-box').classList.toggle('hidden', !activeConfig.manualScoreEnabled);
-      document.getElementById('input-manual-score').value = activeConfig.manualScoreValue;
-
-      const calc = calculateHandPreview();
-      document.getElementById('selected-yaku-count-badge').textContent = `${calc.validYaku.length}개 역 선택됨`;
-      document.getElementById('preview-tier-badge').textContent = calc.tierName;
-      document.getElementById('preview-han-fu').textContent = calc.valid
-        ? `${calc.totalHan}판 ${calc.fu}부 (역 ${calc.yakuHan}판 + 도라 ${calc.totalDora})`
-        : '0판';
-      document.getElementById('preview-base-points').textContent = `${calc.totalGain.toLocaleString()}점`;
-      document.getElementById('preview-transfer-detail').textContent = calc.detailText;
-    }
-
-    function createHandCardHTML(h) {
-      const winnerHands = h.winnerHands || [];
-      const winnerNames = winnerHands.map(wh => state.players[wh.winnerId]?.name || '-').join(', ');
-      const loserName = h.loserId !== null ? (state.players[h.loserId]?.name || '-') : null;
-
-      if (h.outcome === 'draw') {
-        const tenpaiNames = (h.tenpaiIds || []).map(id => state.players[id]?.name).filter(Boolean);
-        return `
-          <div class="bg-slate-950/80 border border-slate-800 rounded-xl p-3.5 space-y-2">
-            <div class="flex items-center justify-between">
-              <div class="flex items-center gap-2">
-                <span class="text-xs font-extrabold px-2 py-0.5 rounded bg-slate-800 text-amber-300">${h.roundLabel} ${h.honba}본장</span>
-                <span class="text-xs font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">유국</span>
-              </div>
-              <span class="text-xs text-slate-400">${tenpaiNames.length > 0 ? `텐파이: ${tenpaiNames.join(', ')}` : '전원 노텐'}</span>
-            </div>
-            ${h.memo ? `<p class="text-xs text-slate-400">💬 ${h.memo}</p>` : ''}
-          </div>
-        `;
-      }
-
-      const isRon = h.outcome === 'ron';
-      const isMulti = winnerHands.length > 1;
-
-      const handsDetailHTML = winnerHands.map(wh => {
-        const pName = state.players[wh.winnerId]?.name || '플레이어';
-        const furoBadge = wh.isFuro ? '<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">후로(울기)</span>' : '<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">멘젠</span>';
-        const yakuBadges = (wh.yakuNames || []).map(yn =>
-          `<span class="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">${yn}</span>`
-        ).join('');
-        return `
-          <div class="bg-slate-900/90 p-2.5 rounded-lg border border-slate-800 space-y-1">
-            <div class="flex items-center justify-between text-xs">
-              <div class="flex items-center gap-1.5">
-                <span class="font-bold text-white">🎯 ${pName}</span>
-                ${furoBadge}
-              </div>
-              <span class="font-black text-emerald-400">+${wh.totalGain.toLocaleString()}점 (${wh.tierName}, ${wh.totalHan}판 ${wh.fu}부)</span>
-            </div>
-            <div class="flex flex-wrap gap-1 pt-0.5">${yakuBadges}</div>
-          </div>
-        `;
-      }).join('');
-
-      return `
-        <div class="bg-slate-950/90 border border-slate-800 hover:border-slate-700 rounded-xl p-3.5 space-y-2.5 transition">
-          <div class="flex flex-wrap items-center justify-between gap-2">
-            <div class="flex items-center gap-2">
-              <span class="text-xs font-extrabold px-2 py-0.5 rounded bg-slate-800 text-amber-300">${h.roundLabel} ${h.honba}본장</span>
-              <span class="text-xs font-bold px-2 py-0.5 rounded ${
-                isRon ? (isMulti ? 'bg-rose-600/30 text-rose-200 border border-rose-500/50' : 'bg-rose-500/20 text-rose-300 border border-rose-500/30') : 'bg-sky-500/20 text-sky-300 border border-sky-500/30'
-              }">${isRon ? (isMulti ? '🔥 더블/트리플론' : '론 (Ron)') : '쯔모 (Tsumo)'}</span>
-            </div>
-            <div class="text-right">
-              <span class="text-sm font-black text-emerald-400">총합 +${(h.totalGain || 0).toLocaleString()}점</span>
-            </div>
-          </div>
-
-          <div class="text-xs text-slate-300">
-            <strong>${winnerNames}</strong> 화료!
-            ${isRon ? `<span class="text-rose-400 ml-1">← ${loserName} 방총</span>` : '<span class="text-sky-300 ml-1">← 전원 지불</span>'}
-          </div>
-
-          <div class="space-y-1.5 pt-1">
-            ${handsDetailHTML}
-          </div>
-
-          ${h.memo ? `<div class="text-xs text-slate-400 bg-slate-900/90 px-2.5 py-1.5 rounded-lg border border-slate-800/80">💬 ${h.memo}</div>` : ''}
-        </div>
-      `;
-    }
-
-    function renderFeedsAndHistory() {
-      const recentFeed = document.getElementById('recent-hands-feed');
-      const fullList = document.getElementById('full-history-list');
-      document.getElementById('feed-count-badge').textContent = `${state.history.length}건`;
-
-      if (state.history.length === 0) {
-        const emptyHTML = `
-          <div class="text-center py-12 text-slate-500 text-xs space-y-2">
-            <div class="text-2xl">🀄</div>
-            <p>아직 기록된 화료 내역이 없습니다.<br/>좌측 패널에서 첫 화료 역을 기록해 보세요!</p>
-          </div>
-        `;
-        recentFeed.innerHTML = emptyHTML;
-        fullList.innerHTML = emptyHTML;
-        return;
-      }
-
-      const reversed = [...state.history].reverse();
-      recentFeed.innerHTML = reversed.map(h => createHandCardHTML(h)).join('');
-
-      const pCount = getPlayerCount();
-      const playerFilterEl = document.getElementById('filter-history-player');
-      const currentPFilter = playerFilterEl.value || 'all';
-      playerFilterEl.innerHTML = '<option value="all">모든 플레이어</option>' +
-        state.players.slice(0, pCount).map(p => `<option value="${p.id}">${p.name}</option>`).join('');
-      playerFilterEl.value = currentPFilter;
-
-      const typeFilter = document.getElementById('filter-history-type').value;
-      const filteredHistory = reversed.filter(h => {
-        if (typeFilter !== 'all' && h.outcome !== typeFilter) return false;
-        if (currentPFilter !== 'all') {
-          const pid = Number(currentPFilter);
-          if (h.outcome === 'draw') {
-            return (h.tenpaiIds || []).includes(pid);
-          }
-          const wList = (h.winnerHands || []).map(wh => wh.winnerId);
-          return wList.includes(pid) || h.loserId === pid;
-        }
-        return true;
-      });
-
-      fullList.innerHTML = filteredHistory.length > 0
-        ? filteredHistory.map(h => createHandCardHTML(h)).join('')
-        : '<div class="text-center py-10 text-slate-500 text-xs">조건에 맞는 화료 기록이 없습니다.</div>';
-    }
-
-    function renderCharts() {
-      if (typeof Chart === 'undefined') return;
-      const pCount = getPlayerCount();
-      const activePlayers = state.players.slice(0, pCount);
-      const labels = ['시작', ...state.history.map((h, i) => `${i + 1}. ${h.roundLabel}`)];
-      const startScore = getStartingScore();
-      
-      const datasets = activePlayers.map((p, idx) => {
-        const data = [startScore, ...state.history.map(h => (h.scoresAfter && h.scoresAfter[idx] !== undefined) ? h.scoresAfter[idx] : p.score)];
-        return {
-          label: p.name,
-          data,
-          borderColor: PLAYER_COLORS[idx],
-          backgroundColor: PLAYER_COLORS[idx],
-          tension: 0.25,
-          borderWidth: 2.5,
-          pointRadius: 3
-        };
-      });
-
-      const ctxLive = document.getElementById('chart-score-trend-live').getContext('2d');
-      if (liveTrendChartInstance) liveTrendChartInstance.destroy();
-      liveTrendChartInstance = new Chart(ctxLive, {
-        type: 'line',
-        data: { labels, datasets },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { labels: { color: '#cbd5e1', font: { size: 11 } } }
-          },
-          scales: {
-            x: { ticks: { color: '#94a3b8', font: { size: 10 } }, grid: { color: '#1e293b' } },
-            y: { ticks: { color: '#94a3b8', font: { size: 10 } }, grid: { color: '#1e293b' } }
-          }
-        }
-      });
-
-      const ctxTrend = document.getElementById('chart-score-trend').getContext('2d');
-      if (scoreChartInstance) scoreChartInstance.destroy();
-      scoreChartInstance = new Chart(ctxTrend, {
-        type: 'line',
-        data: { labels, datasets },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { labels: { color: '#cbd5e1', font: { size: 11 } } }
-          },
-          scales: {
-            x: { ticks: { color: '#94a3b8', font: { size: 10 } }, grid: { color: '#1e293b' } },
-            y: { ticks: { color: '#94a3b8', font: { size: 10 } }, grid: { color: '#1e293b' } }
-          }
-        }
-      });
-
-      const globalYakuMap = {};
-      state.history.forEach(h => {
-        (h.winnerHands || []).forEach(wh => {
-          (wh.yakuNames || []).forEach(yn => {
-            globalYakuMap[yn] = (globalYakuMap[yn] || 0) + 1;
-          });
-        });
-      });
-      const sortedYaku = Object.entries(globalYakuMap).sort((a, b) => b[1] - a[1]).slice(0, 8);
-
-      const ctxYaku = document.getElementById('chart-yaku-freq').getContext('2d');
-      if (yakuChartInstance) yakuChartInstance.destroy();
-      yakuChartInstance = new Chart(ctxYaku, {
-        type: 'bar',
-        data: {
-          labels: sortedYaku.length ? sortedYaku.map(e => e[0]) : ['기록 없음'],
-          datasets: [{
-            label: '출현 횟수(회)',
-            data: sortedYaku.length ? sortedYaku.map(e => e[1]) : [0],
-            backgroundColor: '#10b981',
-            borderRadius: 6
-          }]
-        },
-        options: {
-          indexAxis: 'y',
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { display: false }
-          },
-          scales: {
-            x: { beginAtZero: true, ticks: { stepSize: 1, color: '#94a3b8' }, grid: { color: '#1e293b' } },
-            y: { ticks: { color: '#e2e8f0', font: { size: 11 } }, grid: { display: false } }
-          }
-        }
-      });
-    }
-
-    function renderMonthlyStatsAndChart() {
-      const pCount = getPlayerCount();
-      const activePlayers = state.players.slice(0, pCount);
-      
-      const playerStats = {};
-      activePlayers.forEach(p => {
-        playerStats[p.id] = {
-          name: p.name,
-          games: 0,
-          ranks: [0, 0, 0, 0],
-          wins: 0,
-          winScoreSum: 0,
-          dealIns: 0,
-          dealInScoreSum: 0,
-          totalRankSum: 0,
-          score: p.score
-        };
-      });
-
-      if (state.history.length > 0) {
-        state.history.forEach(h => {
-          if (h.scoresAfter && h.scoresAfter.length >= pCount) {
-            const sortedByScore = activePlayers.map((p, idx) => ({
-              id: p.id,
-              score: h.scoresAfter[idx]
-            })).sort((a, b) => b.score - a.score);
-
-            sortedByScore.forEach((item, rIdx) => {
-              if (playerStats[item.id]) {
-                if (rIdx < 4) {
-                  playerStats[item.id].ranks[rIdx] += 1;
-                }
-                playerStats[item.id].games += 1;
-                playerStats[item.id].totalRankSum += (rIdx + 1);
-              }
-            });
-          }
-
-          const winnerHands = h.winnerHands || [];
-          if (h.outcome !== 'draw' && winnerHands.length > 0) {
-            winnerHands.forEach(wh => {
-              if (playerStats[wh.winnerId]) {
-                playerStats[wh.winnerId].wins += 1;
-                playerStats[wh.winnerId].winScoreSum += (wh.totalGain || 0);
-              }
-            });
-          }
-
-          if (h.outcome === 'ron' && h.loserId !== null && playerStats[h.loserId]) {
-            playerStats[h.loserId].dealIns += 1;
-            playerStats[h.loserId].dealInScoreSum += (h.baseHandScore || 0);
-          }
-        });
-      }
-
-      const currentStandings = calculateMajsoulStandings();
-      const leaderboardBody = document.getElementById('leaderboard-table-body');
-      leaderboardBody.innerHTML = '';
-
-      currentStandings.forEach((st, idx) => {
-        const pStat = playerStats[st.id] || { games: 1, ranks: [0,0,0,0], wins: 0, winScoreSum: 0, dealIns: 0, dealInScoreSum: 0, totalRankSum: st.rank };
-        const totalG = pStat.games > 0 ? pStat.games : 1;
-        
-        const firstRate = ((pStat.ranks[0] / totalG) * 100).toFixed(1);
-        const top2Rate = (((pStat.ranks[0] + pStat.ranks[1]) / totalG) * 100).toFixed(1);
-        const avoid4thRate = (((pStat.ranks[0] + pStat.ranks[1] + pStat.ranks[2]) / totalG) * 100).toFixed(1);
-        const winRate = ((pStat.wins / totalG) * 100).toFixed(1);
-        const dealInRate = ((pStat.dealIns / totalG) * 100).toFixed(1);
-
-        const avgWinScore = pStat.wins > 0 ? Math.round(pStat.winScoreSum / pStat.wins) : 0;
-        const avgDealInScore = pStat.dealIns > 0 ? Math.round(pStat.dealInScoreSum / pStat.dealIns) : 0;
-
-        const rankColors = st.rank === 1 ? 'text-amber-400 font-bold' : st.rank === 2 ? 'text-slate-200 font-bold' : st.rank === 3 ? 'text-amber-600 font-semibold' : 'text-rose-400 font-semibold';
-
-        const tr = document.createElement('tr');
-        tr.className = 'hover:bg-slate-950/60 transition';
-        tr.innerHTML = `
-          <td class="p-3 text-center ${rankColors}">${st.rank}위</td>
-          <td class="p-3 font-bold text-white flex items-center gap-2">
-            <span class="w-2.5 h-2.5 rounded-full" style="background:${PLAYER_COLORS[st.id]}"></span>
-            ${st.name}
-          </td>
-          <td class="p-3 text-center text-slate-300">${totalG}회</td>
-          <td class="p-3 text-center text-amber-300 font-semibold">${firstRate}% <span class="text-[10px] text-slate-400">(${pStat.ranks[0]})</span></td>
-          <td class="p-3 text-center text-emerald-300 font-semibold">${top2Rate}% <span class="text-[10px] text-slate-400">(${pStat.ranks[0]+pStat.ranks[1]})</span></td>
-          <td class="p-3 text-center text-sky-300 font-semibold">${avoid4thRate}%</td>
-          <td class="p-3 text-center text-emerald-400 font-bold">${winRate}% <span class="text-[10px] text-slate-400">(${pStat.wins})</span></td>
-          <td class="p-3 text-center text-rose-400 font-bold">${dealInRate}% <span class="text-[10px] text-slate-400">(${pStat.dealIns})</span></td>
-          <td class="p-3 text-right text-amber-400 font-semibold">${avgWinScore > 0 ? avgWinScore.toLocaleString() + '점' : '-'}</td>
-          <td class="p-3 text-right text-rose-300 font-semibold">${avgDealInScore > 0 ? avgDealInScore.toLocaleString() + '점' : '-'}</td>
-          <td class="p-3 text-right font-black ${st.finalPt >= 0 ? 'text-emerald-400' : 'text-rose-400'}">
-            ${st.finalPt >= 0 ? '+' : ''}${st.finalPt} pt
-          </td>
-        `;
-        leaderboardBody.appendChild(tr);
-      });
-
-      let maxGainVal = 0;
-      let maxGainInfo = '기록 없음';
-      let allYakuCounts = {};
-
-      state.history.forEach(h => {
-        if (h.outcome !== 'draw') {
-          (h.winnerHands || []).forEach(wh => {
-            if ((wh.totalGain || 0) > maxGainVal) {
-              maxGainVal = wh.totalGain;
-              const wName = state.players[wh.winnerId]?.name || '플레이어';
-              maxGainInfo = `${h.roundLabel} (${wName}, +${wh.totalGain.toLocaleString()}점)`;
-            }
-            (wh.yakuNames || []).forEach(yn => {
-              allYakuCounts[yn] = (allYakuCounts[yn] || 0) + 1;
-            });
-          });
-        }
-      });
-
-      document.getElementById('stat-all-hands').textContent = `${state.history.length}회`;
-      document.getElementById('stat-max-gain').textContent = `${maxGainVal.toLocaleString()}점`;
-      document.getElementById('stat-max-gain-desc').textContent = maxGainInfo;
-
-      const topYakuEntry = Object.entries(allYakuCounts).sort((a, b) => b[1] - a[1])[0];
-      if (topYakuEntry) {
-        document.getElementById('stat-top-yaku').textContent = topYakuEntry[0];
-        document.getElementById('stat-top-yaku-count').textContent = `총 ${topYakuEntry[1]}회 출현`;
-      } else {
-        document.getElementById('stat-top-yaku').textContent = '-';
-        document.getElementById('stat-top-yaku-count').textContent = '총 0회 출현';
-      }
-
-      let totalWinsCount = 0;
-      let totalGainSum = 0;
-      state.history.forEach(h => {
-        if (h.outcome !== 'draw') {
-          (h.winnerHands || []).forEach(wh => {
-            totalWinsCount += 1;
-            totalGainSum += (wh.totalGain || 0);
-          });
-        }
-      });
-      const avgGainVal = totalWinsCount > 0 ? Math.round(totalGainSum / totalWinsCount) : 0;
-      document.getElementById('stat-avg-gain').textContent = `${avgGainVal.toLocaleString()}점`;
-    }
-
-    function renderStatsAndCharts() {
-      const pCount = getPlayerCount();
-      const activePlayers = state.players.slice(0, pCount);
-      const totalHands = state.history.length || 1;
-
-      const majsoulStandings = calculateMajsoulStandings();
-      const rankingGrid = document.getElementById('majsoul-final-ranking-grid');
-      rankingGrid.innerHTML = '';
-
-      majsoulStandings.forEach((st, idx) => {
-        const rankColor = st.rank === 1 ? 'text-amber-400 border-amber-500/50 bg-amber-500/10' : st.rank === 2 ? 'text-slate-200 border-slate-700 bg-slate-950/80' : st.rank === 3 ? 'text-amber-600 border-amber-800/40 bg-slate-950/80' : 'text-rose-400 border-rose-900/40 bg-slate-950/80';
-        const box = document.createElement('div');
-        box.className = `rounded-xl p-3.5 border ${rankColor} space-y-2 flex flex-col justify-between`;
-        box.innerHTML = `
-          <div class="flex items-center justify-between">
-            <span class="text-xs font-extrabold px-2 py-0.5 rounded bg-slate-900 text-white">${st.rank}위</span>
-            <span class="font-bold text-sm text-white truncate">${st.name}</span>
-          </div>
-          <div class="space-y-0.5 text-xs">
-            <div class="flex justify-between text-slate-300">
-              <span>최종 점수:</span>
-              <strong class="text-white">${st.score.toLocaleString()}점</strong>
-            </div>
-            <div class="flex justify-between text-slate-300">
-              <span>반환점 환산(오카):</span>
-              <span class="${st.rawPt >= 0 ? 'text-emerald-400' : 'text-rose-400'} font-semibold">${st.rawPt >= 0 ? '+' : ''}${st.rawPt}</span>
-            </div>
-            <div class="flex justify-between text-slate-300">
-              <span>우마(Uma):</span>
-              <span class="${st.uma >= 0 ? 'text-emerald-400' : 'text-rose-400'} font-semibold">${st.uma >= 0 ? '+' : ''}${st.uma}</span>
-            </div>
-          </div>
-          <div class="pt-2 border-t border-slate-800 flex items-baseline justify-between">
-            <span class="text-[11px] text-slate-400">최종 Pt:</span>
-            <span class="text-base font-black ${st.finalPt >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${st.finalPt >= 0 ? '+' : ''}${st.finalPt} pt</span>
-          </div>
-        `;
-        rankingGrid.appendChild(box);
-      });
-
-      const statsContainer = document.getElementById('stats-player-cards');
-      statsContainer.innerHTML = '';
-
-      activePlayers.forEach((p, idx) => {
-        const playerWins = [];
-        state.history.forEach(h => {
-          if (h.outcome !== 'draw' && h.winnerHands) {
-            h.winnerHands.forEach(wh => {
-              if (wh.winnerId === p.id) {
-                playerWins.push({ ...wh, roundLabel: h.roundLabel, outcome: h.outcome });
-              }
-            });
-          }
-        });
-
-        const rons = playerWins.filter(w => w.outcome === 'ron').length;
-        const tsumos = playerWins.filter(w => w.outcome === 'tsumo').length;
-        const dealIns = state.history.filter(h => h.outcome === 'ron' && h.loserId === p.id).length;
-        const avgWinScore = playerWins.length > 0
-          ? Math.round(playerWins.reduce((s, w) => s + w.totalGain, 0) / playerWins.length)
-          : 0;
-        const bestHand = playerWins.length > 0
-          ? playerWins.reduce((best, w) => w.totalGain > best.totalGain ? w : best, playerWins[0])
-          : null;
-
-        const yakuCounts = {};
-        playerWins.forEach(w => {
-          (w.yakuNames || []).forEach(yn => {
-            yakuCounts[yn] = (yakuCounts[yn] || 0) + 1;
-          });
-        });
-        const topYakuList = Object.entries(yakuCounts)
-          .sort((a, b) => b[1] - a[1])
-          .slice(0, 5);
-
-        const card = document.createElement('div');
-        card.className = 'bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3';
-        card.innerHTML = `
-          <div class="flex items-center justify-between border-b border-slate-800 pb-2.5">
-            <div class="flex items-center gap-2">
-              <span class="w-3 h-3 rounded-full" style="background:${PLAYER_COLORS[idx]}"></span>
-              <h4 class="font-bold text-base text-white">${p.name}</h4>
-            </div>
-            <span class="text-sm font-black text-emerald-400">${p.score.toLocaleString()}점</span>
-          </div>
-
-          <div class="grid grid-cols-4 gap-2 text-center">
-            <div class="bg-slate-950 p-2 rounded-lg border border-slate-800/80">
-              <div class="text-[11px] text-slate-400">총 화료</div>
-              <div class="text-sm font-bold text-white">${playerWins.length}회</div>
-            </div>
-            <div class="bg-slate-950 p-2 rounded-lg border border-slate-800/80">
-              <div class="text-[11px] text-slate-400">론 / 쯔모</div>
-              <div class="text-sm font-bold text-sky-300">${rons} / ${tsumos}</div>
-            </div>
-            <div class="bg-slate-950 p-2 rounded-lg border border-slate-800/80">
-              <div class="text-[11px] text-slate-400">방총 횟수</div>
-              <div class="text-sm font-bold text-rose-400">${dealIns}회</div>
-            </div>
-            <div class="bg-slate-950 p-2 rounded-lg border border-slate-800/80">
-              <div class="text-[11px] text-slate-400">평균 타점</div>
-              <div class="text-sm font-bold text-amber-300">${avgWinScore.toLocaleString()}</div>
-            </div>
-          </div>
-
-          <div>
-            <div class="text-xs font-semibold text-slate-400 mb-1.5">주력 화료 역</div>
-            <div class="flex flex-wrap gap-1.5">
-              ${topYakuList.length > 0
-                ? topYakuList.map(([yn, cnt]) => `<span class="text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-semibold">${yn} (${cnt}회)</span>`).join('')
-                : '<span class="text-xs text-slate-500">아직 화료 기록 없음</span>'
-              }
-            </div>
-          </div>
-
-          ${bestHand ? `
-            <div class="text-xs bg-slate-950/90 p-2.5 rounded-lg border border-slate-800 text-slate-300">
-              🏅 <strong>최고 득점 화료:</strong> ${bestHand.roundLabel} ${bestHand.tierName} (+${bestHand.totalGain.toLocaleString()}점) — ${(bestHand.yakuNames || []).join(' · ')}
-            </div>
-          ` : ''}
-        `;
-        statsContainer.appendChild(card);
-      });
-
-      renderCharts();
-    }
+      renderRecorderForm();
+    };
+    window.setLoser = function(id) {
+      state.loserId = id;
+      renderRecorderForm();
+    };
 
     function renderAll() {
       renderTopBoard();
       renderRecorderForm();
-      renderFeedsAndHistory();
-      renderCharts();
-      if (state.activeTab === 'stats') {
-        renderStatsAndCharts();
-      } else if (state.activeTab === 'monthly') {
-        renderMonthlyStatsAndChart();
-      }
-    }
-
-    function saveSnapshot() {
-      state.snapshots.push(JSON.parse(JSON.stringify({
-        players: state.players,
-        roundWind: state.roundWind,
-        roundNum: state.roundNum,
-        honba: state.honba,
-        riichiPot: state.riichiPot,
-        isGameOver: state.isGameOver,
-        history: state.history
-      })));
-    }
-
-    function handleWinSubmit() {
-      if (state.isGameOver) return;
-      const pCount = getPlayerCount();
-      const errEl = document.getElementById('win-validation-msg');
-
-      for (let wid of state.winnerIds) {
-        ensureWinnerConfig(wid);
-        const cfg = state.winnerHandConfigs[wid];
-        const testCalc = calculateSingleHandScore(wid, cfg);
-        if (!testCalc.valid) {
-          state.activeConfigWinnerId = wid;
-          renderRecorderForm();
-          errEl.textContent = `⚠️ [${state.players.find(p=>p.id===wid)?.name}]의 성립 역 조건이 충족되지 않았습니다.`;
-          errEl.classList.remove('hidden');
-          return;
-        }
-      }
-      errEl.classList.add('hidden');
-
-      saveSnapshot();
-
-      const dealerIdx = state.roundNum % pCount;
-      const roundLabel = getRoundLabel(state.roundWind, dealerIdx);
-
-      state.riichiDeclared.slice(0, pCount).forEach((declared, idx) => {
-        if (declared) {
-          state.players[idx].score -= 1000;
-          state.riichiPot += 1;
-        }
-      });
-
-      const currentHandRiichiCount = state.riichiDeclared.slice(0, pCount).filter(Boolean).length;
-      const totalRiichiSticks = state.riichiPot + currentHandRiichiCount;
-      const firstWinner = state.winnerIds[0];
-      const winnerDeclaredRiichi = state.riichiDeclared[firstWinner];
-      const effectiveRiichiSticks = winnerDeclaredRiichi ? Math.max(0, totalRiichiSticks - 1) : totalRiichiSticks;
-      const riichiBonus = effectiveRiichiSticks * 1000;
-      const honbaBonusTotal = state.honba * 300;
-
-      const winnerHandsRecord = [];
-
-      if (state.outcomeType === 'ron') {
-        const winners = [...state.winnerIds];
-        winners.sort((a, b) => {
-          const distA = (a - state.loserId + pCount) % pCount;
-          const distB = (b - state.loserId + pCount) % pCount;
-          return distA - distB;
-        });
-
-        let totalLoserPay = 0;
-        let grandTotalGain = 0;
-
-        winners.forEach((wid, idx) => {
-          const cfg = state.winnerHandConfigs[wid];
-          const singleCalc = calculateSingleHandScore(wid, cfg);
-          const baseScore = singleCalc.baseHandScore;
-          const extraBonus = (idx === 0) ? (honbaBonusTotal + riichiBonus) : 0;
-          const totalTake = baseScore + extraBonus;
-
-          totalLoserPay += baseScore;
-          grandTotalGain += totalTake;
-          state.players[wid].score += totalTake;
-
-          winnerHandsRecord.push({
-            winnerId: wid,
-            isFuro: cfg.isFuro,
-            yakuNames: singleCalc.validYaku.map(y => y.name),
-            yakuIds: singleCalc.validYaku.map(y => y.id),
-            totalHan: singleCalc.totalHan,
-            fu: singleCalc.fu,
-            tierName: singleCalc.tierName,
-            baseHandScore: baseScore,
-            totalGain: totalTake
-          });
-        });
-
-        totalLoserPay += honbaBonusTotal;
-        state.players[state.loserId].score -= totalLoserPay;
-        state.riichiPot = 0;
-
-        const memo = document.getElementById('input-hand-memo').value.trim();
-
-        state.history.push({
-          id: 'h_' + Date.now(),
-          timestamp: Date.now(),
-          roundLabel,
-          honba: state.honba,
-          outcome: 'ron',
-          winnerHands: winnerHandsRecord,
-          loserId: state.loserId,
-          memo,
-          totalGain: grandTotalGain,
-          scoresAfter: state.players.slice(0, pCount).map(p => p.score)
-        });
-
-        if (winners.includes(dealerIdx)) {
-          state.honba += 1;
-        } else {
-          state.honba = 0;
-          checkGameProgression(pCount, dealerIdx);
-        }
-
-      } else {
-        const winnerId = state.winnerIds[0];
-        const cfg = state.winnerHandConfigs[winnerId];
-        const singleCalc = calculateSingleHandScore(winnerId, cfg);
-        const eachHonba = 100 * state.honba;
-        let totalCollected = 0;
-
-        for (let i = 0; i < pCount; i++) {
-          if (i === winnerId) continue;
-          let share = 0;
-          if (cfg.manualScoreEnabled) {
-            share = Math.round(singleCalc.baseHandScore / (pCount - 1));
-          } else {
-            share = (i === dealerIdx) ? singleCalc.oyaPay : singleCalc.koPay;
-          }
-          const pay = share + eachHonba;
-          state.players[i].score -= pay;
-          totalCollected += pay;
-        }
-        const totalTake = totalCollected + riichiBonus;
-        state.players[winnerId].score += totalTake;
-        state.riichiPot = 0;
-
-        const memo = document.getElementById('input-hand-memo').value.trim();
-
-        winnerHandsRecord.push({
-          winnerId,
-          isFuro: cfg.isFuro,
-          yakuNames: singleCalc.validYaku.map(y => y.name),
-          yakuIds: singleCalc.validYaku.map(y => y.id),
-          totalHan: singleCalc.totalHan,
-          fu: singleCalc.fu,
-          tierName: singleCalc.tierName,
-          baseHandScore: singleCalc.baseHandScore,
-          totalGain: totalTake
-        });
-
-        state.history.push({
-          id: 'h_' + Date.now(),
-          timestamp: Date.now(),
-          roundLabel,
-          honba: state.honba,
-          outcome: 'tsumo',
-          winnerHands: winnerHandsRecord,
-          loserId: null,
-          memo,
-          totalGain: totalTake,
-          scoresAfter: state.players.slice(0, pCount).map(p => p.score)
-        });
-
-        if (winnerId === dealerIdx) {
-          state.honba += 1;
-        } else {
-          state.honba = 0;
-          checkGameProgression(pCount, dealerIdx);
-        }
-      }
-
-      state.riichiDeclared = [false, false, false, false];
-      document.getElementById('input-hand-memo').value = '';
-      saveToStorage();
-      renderAll();
-      showToast(state.isGameOver ? '🏆 토비 또는 조건 달성으로 대국이 종료되었습니다!' : '🀄 화료 기록 저장 완료!');
-    }
-
-    function handleDrawSubmit() {
-      if (state.isGameOver) return;
-      saveSnapshot();
-      const pCount = getPlayerCount();
-      const dealerIdx = state.roundNum % pCount;
-      const roundLabel = getRoundLabel(state.roundWind, dealerIdx);
-
-      state.riichiDeclared.slice(0, pCount).forEach((declared, idx) => {
-        if (declared) {
-          state.players[idx].score -= 1000;
-          state.riichiPot += 1;
-        }
-      });
-
-      const tenpaiIds = [];
-      const notenIds = [];
-      for (let i = 0; i < pCount; i++) {
-        if (state.tenpaiDeclared[i]) tenpaiIds.push(i);
-        else notenIds.push(i);
-      }
-
-      let gainPerTenpai = 0;
-      if (tenpaiIds.length > 0 && notenIds.length > 0) {
-        const pool = pCount === 4 ? 3000 : 2000;
-        gainPerTenpai = Math.floor(pool / tenpaiIds.length);
-        const lossPerNoten = Math.floor(pool / notenIds.length);
-        tenpaiIds.forEach(id => { state.players[id].score += gainPerTenpai; });
-        notenIds.forEach(id => { state.players[id].score -= lossPerNoten; });
-      }
-
-      const memo = document.getElementById('input-draw-memo').value.trim();
-
-      state.history.push({
-        id: 'h_' + Date.now(),
-        timestamp: Date.now(),
-        roundLabel,
-        honba: state.honba,
-        outcome: 'draw',
-        winnerHands: [],
-        loserId: null,
-        tenpaiIds,
-        memo,
-        totalGain: gainPerTenpai,
-        scoresAfter: state.players.slice(0, pCount).map(p => p.score)
-      });
-
-      state.honba += 1;
-      if (!tenpaiIds.includes(dealerIdx)) {
-        checkGameProgression(pCount, dealerIdx);
-      }
-
-      state.riichiDeclared = [false, false, false, false];
-      state.tenpaiDeclared = [false, false, false, false];
-      document.getElementById('input-draw-memo').value = '';
-      saveToStorage();
-      renderAll();
-      showToast(state.isGameOver ? '🏆 대국이 종료되었습니다!' : `📌 ${roundLabel} 유국 기록이 저장되었습니다.`);
-    }
-
-    // 토비 및 서입(연장전) 판정 핵심 로직
-    function checkGameProgression(pCount, prevDealerIdx) {
-      const hasTobi = state.players.slice(0, pCount).some(p => p.score < 0);
-      if (hasTobi) {
-        state.isGameOver = true;
-        saveToSupabase();
-        showToast('💥 토비 발생! 대국이 즉시 종료되었습니다.');
-        return;
-      }
-
-      state.roundNum += 1;
-
-      const isLastRegularRound = (state.gameMode.includes('hanchan') && state.roundWind === 1 && state.roundNum >= pCount) ||
-                                 (state.gameMode.includes('tonpuu') && state.roundWind === 0 && state.roundNum >= pCount);
-
-      if (isLastRegularRound) {
-        const activePlayers = state.players.slice(0, pCount);
-        const topScore = Math.max(...activePlayers.map(p => p.score));
-        const returnScore = getReturnScore();
-
-        if (topScore >= returnScore) {
-          state.isGameOver = true;
-          showToast('🏆 1위가 3만 점을 넘겨 대국이 종료되었습니다!');
-        } else {
-          state.roundWind = 2; // 서풍장
-          state.roundNum = 0;
-          showToast('🔄 1위가 3만 점 미만이므로 서입(서국 연장전)에 돌입합니다!');
-        }
-      } else if (state.roundWind >= 2) {
-        const activePlayers = state.players.slice(0, pCount);
-        const topScore = Math.max(...activePlayers.map(p => p.score));
-        const returnScore = getReturnScore();
-        if (topScore >= returnScore) {
-          state.isGameOver = true;
-          showToast('🏆 연장전 중 1위가 3만 점을 달성하여 대국이 종료되었습니다!');
-        } else if (state.roundNum >= pCount) {
-          state.roundWind += 1;
-          state.roundNum = 0;
-          showToast('🔄 연장전 지속 중!');
-        }
-      } else {
-        if (state.roundNum >= pCount) {
-          state.roundNum = 0;
-          state.roundWind += 1;
-        }
-      }
-      saveToSupabase();
+      renderArchiveList();
     }
 
     function switchTab(tab) {
       state.activeTab = tab;
-      const views = {
-        board: document.getElementById('view-board'),
-        history: document.getElementById('view-history'),
-        stats: document.getElementById('view-stats'),
-        monthly: document.getElementById('view-monthly')
-      };
-      const btns = {
-        board: document.getElementById('tab-btn-board'),
-        history: document.getElementById('tab-btn-history'),
-        stats: document.getElementById('tab-btn-stats'),
-        monthly: document.getElementById('tab-btn-monthly')
-      };
-
-      Object.keys(views).forEach(k => {
-        if (k === tab) {
-          views[k].classList.remove('hidden');
-          btns[k].className = 'px-3.5 py-1.5 rounded-lg text-xs font-semibold transition bg-emerald-600 text-white shadow';
-        } else {
-          views[k].classList.add('hidden');
-          btns[k].className = 'px-3.5 py-1.5 rounded-lg text-xs font-semibold transition text-slate-300 hover:text-white';
-        }
+      ['board', 'history', 'stats', 'archive', 'monthly'].forEach(t => {
+        document.getElementById(`view-${t}`).classList.toggle('hidden', t !== tab);
       });
-
-      if (tab === 'stats') {
-        renderStatsAndCharts();
-      } else if (tab === 'monthly') {
-        renderMonthlyStatsAndChart();
-      } else if (tab === 'board') {
-        renderCharts();
-      }
-    }
-
-    function downloadHtmlFile() {
-      saveToSupabase();
-      const fullHtml = document.documentElement.outerHTML;
-      const blob = new Blob([fullHtml], { type: 'text/html;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `janglog_match_${Date.now()}.html`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      showToast('📥 현재 상태가 포함된 HTML 파일이 다운로드되었습니다!');
+      if (tab === 'archive') renderArchiveList();
     }
 
     window.addEventListener('DOMContentLoaded', async () => {
-      // 1. Supabase 클라우드에서 데이터 먼저 불러오기 시도
-      const loaded = await loadFromSupabase();
-      if (!loaded) {
-        loadSampleMatch();
-      }
-
-      // 2. Supabase 실시간(Realtime) 변경 구독 설정 (다른 기기에서 바뀔 때 즉시 동기화)
-      supabaseClient
-        .channel('public:match_sessions')
-        .on('postgres_changes', { 
-          event: '*', 
-          schema: 'public', 
-          table: 'match_sessions', 
-          filter: `room_code=eq.${ROOM_ID}` 
-        }, payload => {
-          if (payload.new && payload.new.state_data) {
-            state = Object.assign(state, payload.new.state_data);
-            renderAll();
-            showToast('🔄 다른 기기의 변경사항이 실시간 동기화되었습니다!');
-          }
-        })
-        .subscribe();
+      await loadFromSupabase();
+      renderAll();
 
       document.getElementById('tab-btn-board').addEventListener('click', () => switchTab('board'));
       document.getElementById('tab-btn-history').addEventListener('click', () => switchTab('history'));
       document.getElementById('tab-btn-stats').addEventListener('click', () => switchTab('stats'));
+      document.getElementById('tab-btn-archive').addEventListener('click', () => switchTab('archive'));
       document.getElementById('tab-btn-monthly').addEventListener('click', () => switchTab('monthly'));
-
-      document.getElementById('btn-download-html').addEventListener('click', downloadHtmlFile);
-
-      const searchInputEl = document.getElementById('input-yaku-search');
-      if (searchInputEl) {
-        searchInputEl.value = state.yakuSearchQuery || '';
-        searchInputEl.addEventListener('input', (e) => {
-          state.yakuSearchQuery = e.target.value;
-          renderRecorderForm();
-        });
-        searchInputEl.addEventListener('keydown', (e) => {
-          if (e.key === 'Enter') {
-            e.preventDefault();
-            const q = searchInputEl.value.trim().toLowerCase();
-            const activeWid = state.activeConfigWinnerId ?? state.winnerIds[0];
-            ensureWinnerConfig(activeWid);
-            const activeConfig = state.winnerHandConfigs[activeWid];
-
-            if (q.includes('동') || q.includes('남') || q.includes('서') || q.includes('북')) {
-              ['yakuhai_jikaze', 'yakuhai_bakaze'].forEach(id => {
-                if (!activeConfig.selectedYaku.includes(id)) {
-                  activeConfig.selectedYaku.push(id);
-                }
-              });
-              showToast('자풍패 및 장풍패(연풍패)가 동시에 선택되었습니다!');
-              state.yakuSearchQuery = '';
-              searchInputEl.value = '';
-              renderRecorderForm();
-            } else {
-              const filtered = YAKU_LIST.filter(y => {
-                if (activeConfig.isFuro && y.isMenzenOnly) return false;
-                const nameMatch = y.name.toLowerCase().includes(q);
-                const kwMatch = y.keywords && y.keywords.some(kw => kw.toLowerCase().includes(q));
-                return nameMatch || kwMatch;
-              });
-              if (filtered.length > 0) {
-                const targetId = filtered[0].id;
-                if (!activeConfig.selectedYaku.includes(targetId)) {
-                  activeConfig.selectedYaku.push(targetId);
-                  showToast(filtered[0].name + ' 역이 선택되었습니다.');
-                }
-                state.yakuSearchQuery = '';
-                searchInputEl.value = '';
-                renderRecorderForm();
-              }
-            }
-          }
-        });
-      }
-
-      document.querySelectorAll('.outcome-type-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          state.outcomeType = btn.getAttribute('data-outcome');
-          if (state.outcomeType === 'tsumo') {
-            state.winnerIds = [state.winnerIds[0] ?? 0];
-            state.activeConfigWinnerId = state.winnerIds[0];
-            ensureWinnerConfig(state.activeConfigWinnerId);
-            if (!state.winnerHandConfigs[state.activeConfigWinnerId].selectedYaku.includes('tsumo')) {
-              state.winnerHandConfigs[state.activeConfigWinnerId].selectedYaku.push('tsumo');
-            }
-          } else if (state.outcomeType === 'ron') {
-            const wid = state.activeConfigWinnerId ?? state.winnerIds[0];
-            ensureWinnerConfig(wid);
-            state.winnerHandConfigs[wid].selectedYaku = state.winnerHandConfigs[wid].selectedYaku.filter(id => id !== 'tsumo');
-          }
-          renderRecorderForm();
-        });
-      });
-
-      document.getElementById('btn-clear-yaku').addEventListener('click', () => {
-        const activeWid = state.activeConfigWinnerId ?? state.winnerIds[0];
-        ensureWinnerConfig(activeWid);
-        state.winnerHandConfigs[activeWid].selectedYaku = [];
-        renderRecorderForm();
-      });
-
-      document.querySelectorAll('.ycat-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          state.yakuCategoryFilter = btn.getAttribute('data-ycat');
-          renderRecorderForm();
-        });
-      });
-
-      document.querySelectorAll('.dora-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const key = btn.getAttribute('data-dora');
-          const delta = Number(btn.getAttribute('data-delta'));
-          const activeWid = state.activeConfigWinnerId ?? state.winnerIds[0];
-          ensureWinnerConfig(activeWid);
-          const cfg = state.winnerHandConfigs[activeWid];
-          cfg[key] = Math.max(0, Math.min(13, (cfg[key] || 0) + delta));
-          renderRecorderForm();
-        });
-      });
-
-      document.getElementById('select-fu').addEventListener('change', (e) => {
-        const activeWid = state.activeConfigWinnerId ?? state.winnerIds[0];
-        ensureWinnerConfig(activeWid);
-        state.winnerHandConfigs[activeWid].fu = Number(e.target.value);
-        renderRecorderForm();
-      });
-
-      document.getElementById('chk-manual-score').addEventListener('change', (e) => {
-        const activeWid = state.activeConfigWinnerId ?? state.winnerIds[0];
-        ensureWinnerConfig(activeWid);
-        state.winnerHandConfigs[activeWid].manualScoreEnabled = e.target.checked;
-        document.getElementById('manual-score-box').classList.toggle('hidden', !e.target.checked);
-        renderRecorderForm();
-      });
-      document.getElementById('input-manual-score').addEventListener('input', (e) => {
-        const activeWid = state.activeConfigWinnerId ?? state.winnerIds[0];
-        ensureWinnerConfig(activeWid);
-        state.winnerHandConfigs[activeWid].manualScoreValue = Number(e.target.value);
-        renderRecorderForm();
-      });
-
-      document.getElementById('btn-submit-win').addEventListener('click', handleWinSubmit);
-      document.getElementById('btn-submit-draw').addEventListener('click', handleDrawSubmit);
-
-      document.getElementById('filter-history-player').addEventListener('change', renderFeedsAndHistory);
-      document.getElementById('filter-history-type').addEventListener('change', renderFeedsAndHistory);
-
-      document.getElementById('btn-undo-last').addEventListener('click', () => {
-        if (state.snapshots.length === 0) return;
-        const prev = state.snapshots.pop();
-        state.players = prev.players;
-        state.roundWind = prev.roundWind;
-        state.roundNum = prev.roundNum;
-        state.honba = prev.honba;
-        state.riichiPot = prev.riichiPot;
-        state.isGameOver = prev.isGameOver;
-        state.history = prev.history;
-        saveToSupabase();
-        renderAll();
-        showToast('↩ 직전 기록이 취소되었습니다.');
-      });
-      document.getElementById('btn-load-demo').addEventListener('click', loadSampleMatch);
       document.getElementById('btn-reset-match').addEventListener('click', resetNewMatch);
-
-      const modal = document.getElementById('modal-settings');
-      const openSettings = () => {
-        document.getElementById('setting-game-mode').value = state.gameMode;
-        document.getElementById('setting-uma-profile').value = state.umaProfile || 'majsoul_standard';
-        state.players.forEach((p, idx) => {
-          document.getElementById(`input-pname-${idx}`).value = p.name;
-        });
-        document.getElementById('setting-p3-box').classList.toggle('hidden', state.gameMode.startsWith('3p'));
-        modal.classList.remove('hidden');
-      };
-      document.getElementById('btn-open-settings').addEventListener('click', openSettings);
-      document.getElementById('btn-close-settings').addEventListener('click', () => modal.classList.add('hidden'));
-      document.getElementById('btn-cancel-settings').addEventListener('click', () => modal.classList.add('hidden'));
-      document.getElementById('setting-game-mode').addEventListener('change', (e) => {
-        document.getElementById('setting-p3-box').classList.toggle('hidden', e.target.value.startsWith('3p'));
-      });
-      document.getElementById('btn-save-settings').addEventListener('click', () => {
-        const newMode = document.getElementById('setting-game-mode').value;
-        const newUma = document.getElementById('setting-uma-profile').value;
-        const modeChanged = newMode !== state.gameMode;
-        state.gameMode = newMode;
-        state.umaProfile = newUma;
-        for (let i = 0; i < 4; i++) {
-          const val = document.getElementById(`input-pname-${i}`).value.trim();
-          if (val) state.players[i].name = val;
-        }
-        if (modeChanged) {
-          resetNewMatch();
-        } else {
-          saveToSupabase();
-          renderAll();
-        }
-        modal.classList.add('hidden');
-        showToast('⚙️ 작혼 룰 설정이 적용되었습니다.');
-      });
-
-      document.getElementById('btn-export-summary').addEventListener('click', () => {
-        const standings = calculateMajsoulStandings();
-        let lines = [`[작로그 작혼식 대국 요약 - 총 ${state.history.length}국 진행]`];
-        standings.forEach(st => {
-          lines.push(`${st.rank}위: ${st.name} (${st.score.toLocaleString()}점) | 최종 Pt: ${st.finalPt >= 0 ? '+' : ''}${st.finalPt} pt (우마 ${st.uma})`);
-        });
-        lines.push('\n[주요 화료 내역]');
-        state.history.forEach(h => {
-          if (h.outcome === 'draw') {
-            lines.push(`- ${h.roundLabel} ${h.honba}본장: 유국`);
-          } else {
-            const wDesc = (h.winnerHands || []).map(wh => `${state.players[wh.winnerId]?.name}(${wh.isFuro ? '후로' : '멘젠'}, ${wh.tierName})`).join(' & ');
-            const how = h.outcome === 'ron' ? `${state.players[h.loserId]?.name}에게 론` : '쯔모';
-            lines.push(`- ${h.roundLabel} ${h.honba}본장: ${wDesc} (${how})`);
-          }
-        });
-        const text = lines.join('\n');
-        const ta = document.createElement('textarea');
-        ta.value = text;
-        document.body.appendChild(ta);
-        ta.select();
-        try {
-          document.execCommand('copy');
-          showToast('📋 최종 정산 및 요약이 클립보드에 복사되었습니다!');
-        } catch (err) {
-          showToast('복사에 실패했습니다.');
-        }
-        document.body.removeChild(ta);
-      });
+      document.getElementById('btn-load-demo').addEventListener('click', loadSampleMatch);
     });
   </script>
 </body>
