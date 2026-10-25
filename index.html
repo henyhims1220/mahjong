@@ -1004,6 +1004,14 @@
           </select>
         </div>
 
+        <div>
+          <label for="setting-kiriage" class="block text-xs font-semibold text-slate-300 mb-1">절상만관(3판 60부 / 4판 30부) 룰</label>
+          <select id="setting-kiriage" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white">
+            <option value="true">절상만관 채용 (작혼/M리그: 만관 8,000 / 12,000점)</option>
+            <option value="false">일반 점수 (비절상: 7,700 / 11,600점)</option>
+          </select>
+        </div>
+
         <div class="space-y-2 pt-2">
           <label class="block text-xs font-semibold text-slate-300">플레이어 이름 (시계 반대 방향 좌석 순서: 동-남-서-북)</label>
           <div class="grid grid-cols-2 gap-2">
@@ -1099,6 +1107,7 @@
     let state = {
       gameMode: '4p_hanchan',
       umaProfile: 'majsoul_standard',
+      kiriageMangan: true,
       // 관리자 전용 [기록용 PW] 및 [삭제용 PW] 초기 해시 (SHA-256) 분리 저장소
       security: {
         presetVersion: 2,
@@ -1525,7 +1534,7 @@
       } else if (totalHan === 5 || (totalHan === 4 && fu >= 40) || (totalHan === 3 && fu >= 70)) {
         basicPoints = 2000;
         tierName = '만관 (Mangan)';
-      } else if ((totalHan === 4 && fu === 30) || (totalHan === 3 && fu === 60)) {
+      } else if (state.kiriageMangan && ((totalHan === 4 && fu === 30) || (totalHan === 3 && fu === 60))) {
         basicPoints = 2000;
         tierName = '절상만관 (Kiriage Mangan)';
       } else {
@@ -4479,6 +4488,7 @@
         requireAdminAuth(() => {
           document.getElementById('setting-game-mode').value = state.gameMode;
           document.getElementById('setting-uma-profile').value = state.umaProfile || 'majsoul_standard';
+          document.getElementById('setting-kiriage').value = String(state.kiriageMangan !== false);
           state.players.forEach((p, idx) => {
             document.getElementById(`input-pname-${idx}`).value = p.name;
           });
@@ -4498,6 +4508,7 @@
         const modeChanged = newMode !== state.gameMode;
         state.gameMode = newMode;
         state.umaProfile = newUma;
+        state.kiriageMangan = newKiriage;
         for (let i = 0; i < 4; i++) {
           const val = document.getElementById(`input-pname-${i}`).value.trim();
           if (val) state.players[i].name = val;
