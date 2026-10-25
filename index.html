@@ -7,6 +7,7 @@
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <!-- Supabase JS SDK 추가 -->
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -89,6 +90,8 @@
         </button>
         <button id="btn-open-settings" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition flex items-center gap-1.5">
           <span>⚙️ 룰/이름 설정</span>
+        <button id="btn-export-image" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 transition flex items-center gap-1.5 shadow">
+          <span>📷 결과 이미지 저장</span>
         </button>
         <button id="btn-export-summary" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-emerald-300 border border-slate-700 transition flex items-center gap-1.5">
           <span>📋 결과 요약 복사</span>
@@ -3916,6 +3919,119 @@
       showToast('📥 현재 상태가 포함된 HTML 파일이 다운로드되었습니다!');
     }
 
+    function exportMatchSummaryImage() {
+      if (typeof html2canvas === 'undefined') {
+        showToast('⚠️ 이미지 변환 라이브러리를 불러오지 못했습니다.');
+        return;
+      }
+
+      const standings = calculateMajsoulStandings();
+      const pCount = getPlayerCount();
+      const roundLabel = state.isGameOver ? '대국 종료 (종국)' : getRoundLabel(state.roundWind, state.roundNum % pCount);
+
+      const card = document.createElement('div');
+      card.style.position = 'fixed';
+      card.style.top = '-9999px';
+      card.style.left = '-9999px';
+      card.style.width = '640px';
+      card.style.backgroundColor = '#0b131e';
+      card.style.color = '#f1f5f9';
+      card.style.fontFamily = "'Noto Sans KR', sans-serif";
+      card.style.padding = '28px';
+      card.style.borderRadius = '20px';
+      card.style.border = '2px solid rgba(16, 185, 129, 0.4)';
+      card.style.boxSizing = 'border-box';
+
+      const recentHands = [...state.history].reverse().slice(0, 4);
+      const handsHtml = recentHands.length > 0 ? recentHands.map(h => {
+        if (h.outcome === 'draw') {
+          return `<div style="font-size: 11px; color: #94a3b8; display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #1e293b;">
+                    <span>[${h.roundLabel} ${h.honba}본장] 유국</span>
+                    <span style="color: #f59e0b;">무승부</span>
+                  </div>`;
+        }
+        const wDesc = (h.winnerHands || []).map(wh => `${state.players[wh.winnerId]?.name}(${wh.tierName})`).join(' · ');
+        const how = h.outcome === 'ron' ? `${state.players[h.loserId]?.name} 방총` : '쯔모';
+        return `<div style="font-size: 11px; color: #cbd5e1; display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #1e293b;">
+                  <span>[${h.roundLabel}] <strong>${wDesc}</strong></span>
+                  <span style="color: #34d399; font-weight: bold;">+${(h.totalGain || 0).toLocaleString()}점 (${how})</span>
+                </div>`;
+      }).join('') : '<div style="font-size: 11px; color: #64748b; padding: 8px 0;">화료 기록 없음</div>';
+
+      const standingsHtml = standings.map(st => {
+        const medal = st.rank === 1 ? '🥇 1위' : st.rank === 2 ? '🥈 2위' : st.rank === 3 ? '🥉 3위' : '4위';
+        const rankBg = st.rank === 1 ? 'background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.4);' : 'background: #0f172a; border: 1px solid #1e293b;';
+        const ptColor = st.finalPt >= 0 ? '#34d399' : '#f87171';
+        return `
+          <div style="${rankBg} border-radius: 12px; padding: 12px 14px; display: flex; align-items: center; justify-content: space-between;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="font-weight: 800; font-size: 13px; color: ${st.rank === 1 ? '#fbbf24' : '#cbd5e1'};">${medal}</span>
+              <span style="font-weight: 700; font-size: 14px; color: #ffffff;">${st.name}</span>
+            </div>
+            <div style="text-align: right;">
+              <div style="font-weight: 800; font-size: 14px; color: #ffffff;">${st.score.toLocaleString()}점</div>
+              <div style="font-size: 11px; font-weight: 700; color: ${ptColor};">${st.finalPt >= 0 ? '+' : ''}${st.finalPt} pt <span style="color: #64748b; font-weight: 400;">(우마 ${st.uma >= 0 ? '+' : ''}${st.uma})</span></div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      card.innerHTML = `
+        <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #1e293b; padding-bottom: 14px; margin-bottom: 16px;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 24px;">🀄</span>
+            <div>
+              <div style="font-size: 16px; font-weight: 900; color: #ffffff; letter-spacing: -0.5px;">작로그 (JangLog) 대국 결과 리포트</div>
+              <div style="font-size: 11px; color: #10b981;">${document.getElementById('badge-game-mode').textContent} · 총 ${state.history.length}국 진행</div>
+            </div>
+          </div>
+          <div style="text-align: right; font-size: 10px; color: #64748b;">
+            <div>${new Date().toLocaleDateString()}</div>
+            <div style="color: #f59e0b; font-weight: bold;">${roundLabel}</div>
+          </div>
+        </div>
+
+        <div style="margin-bottom: 18px;">
+          <div style="font-size: 12px; font-weight: 700; color: #fbbf24; margin-bottom: 8px; display: flex; align-items: center; gap: 5px;">
+            <span>🏆</span> 최종 순위 & 우마·오카 포인트
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            ${standingsHtml}
+          </div>
+        </div>
+
+        <div style="background: #070d17; border-radius: 12px; padding: 12px 14px; border: 1px solid #1e293b;">
+          <div style="font-size: 11px; font-weight: 700; color: #38bdf8; margin-bottom: 6px;">📜 최근 주요 화료 하이라이트</div>
+          <div>${handsHtml}</div>
+        </div>
+
+        <div style="margin-top: 14px; text-align: center; font-size: 10px; color: #475569;">
+          기록 및 생성: 작로그 (JangLog) 실시간 마작 트래커
+        </div>
+      `;
+
+      document.body.appendChild(card);
+      showToast('📸 결과 이미지를 렌더링 중입니다...');
+
+      html2canvas(card, {
+        scale: 2,
+        backgroundColor: '#0b131e',
+        useCORS: true
+      }).then(canvas => {
+        document.body.removeChild(card);
+        const image = canvas.toDataURL('image/png');
+        const link = document.createElement('a');
+        link.download = `janglog_result_${Date.now()}.png`;
+        link.href = image;
+        link.click();
+        showToast('📷 대국 결과 이미지가 다운로드되었습니다!');
+      }).catch(err => {
+        if (card.parentNode) document.body.removeChild(card);
+        console.error('이미지 생성 실패:', err);
+        showToast('❌ 이미지 생성 중 오류가 발생했습니다.');
+      });
+    }
+        
     function openFinalScoreModal() {
       const pCount = getPlayerCount();
       const expectedSum = pCount * getStartingScore();
@@ -4523,6 +4639,7 @@
         showToast('⚙️ 작혼 룰 설정이 적용되었습니다.');
       });
 
+      document.getElementById('btn-export-image').addEventListener('click', exportMatchSummaryImage);
       document.getElementById('btn-export-summary').addEventListener('click', () => {
         const standings = calculateMajsoulStandings();
         let lines = [`[작로그 작혼식 대국 요약 - 총 ${state.history.length}국 진행]`];
