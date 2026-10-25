@@ -937,6 +937,25 @@
     </div>
   </div>
 
+  <!-- 이미지 제목 설정 모달 -->
+  <div id="modal-image-title" class="fixed inset-0 z-50 hidden bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-5 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="text-base font-bold text-amber-300">📷 결과 이미지 제목 설정</h3>
+        <button type="button" id="btn-close-image-title" class="text-slate-400 hover:text-white text-sm font-bold px-2 py-1">✕</button>
+      </div>
+      <div>
+        <label for="input-image-title" class="block text-xs text-slate-300 mb-1.5">저장할 이미지 파일 제목을 입력하세요:</label>
+        <input id="input-image-title" type="text" placeholder="예: 2026_주말정기전_1회차" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white" />
+      </div>
+      <div class="flex justify-end gap-2 pt-2">
+        <button type="button" id="btn-cancel-image-title" class="px-4 py-2 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700">취소</button>
+        <button type="button" id="btn-confirm-image-title" class="px-4 py-2 rounded-lg text-xs font-bold bg-amber-500 text-slate-950 hover:bg-amber-400">이미지 저장</button>
+      </div>
+    </div>
+  </div>
+
+  
   <!-- UPGRADED Archive Detail Modal (With Score Graph & Player Stats Breakdown) -->
   <div id="modal-archive-detail" class="fixed inset-0 z-50 hidden bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
     <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-4xl w-full p-4 sm:p-6 shadow-2xl space-y-4 max-h-[90vh] flex flex-col">
@@ -3919,7 +3938,7 @@
       showToast('📥 현재 상태가 포함된 HTML 파일이 다운로드되었습니다!');
     }
 
-  async function exportMatchSummaryImage() {
+    async function exportMatchSummaryImage(customTitle) {
       if (typeof html2canvas === 'undefined') {
         showToast('⚠️ html2canvas 라이브러리를 불러오지 못했습니다.');
         return;
@@ -4745,13 +4764,17 @@
       document.getElementById('setting-game-mode').addEventListener('change', (e) => {
         document.getElementById('setting-p3-box').classList.toggle('hidden', e.target.value.startsWith('3p'));
       });
-      document.getElementById('btn-save-settings').addEventListener('click', () => {
+     document.getElementById('btn-save-settings').addEventListener('click', () => {
         const newMode = document.getElementById('setting-game-mode').value;
         const newUma = document.getElementById('setting-uma-profile').value;
+        // 👇 이 부분을 수정하여 셀렉트박스 값을 올바르게 가져오도록 합니다.
+        const newKiriage = document.getElementById('setting-kiriage').value === 'true';
+        
         const modeChanged = newMode !== state.gameMode;
         state.gameMode = newMode;
         state.umaProfile = newUma;
-        state.kiriageMangan = newKiriage;
+        state.kiriageMangan = newKiriage; // 올바르게 정의된 변수 대입
+        
         for (let i = 0; i < 4; i++) {
           const val = document.getElementById(`input-pname-${i}`).value.trim();
           if (val) state.players[i].name = val;
@@ -4765,7 +4788,6 @@
         modal.classList.add('hidden');
         showToast('⚙️ 작혼 룰 설정이 적용되었습니다.');
       });
-
       document.getElementById('btn-export-image').addEventListener('click', exportMatchSummaryImage);
       document.getElementById('btn-export-summary').addEventListener('click', () => {
         const standings = calculateMajsoulStandings();
@@ -4796,6 +4818,38 @@
         }
         document.body.removeChild(ta);
       });
+      const imageTitleModal = document.getElementById('modal-image-title');
+    const btnExportImage = document.getElementById('btn-export-image');
+
+    if (btnExportImage) {
+      // 기존에 동작하던 단순 캡처 함수 대신 모달을 띄우도록 수정
+      btnExportImage.removeEventListener('click', exportMatchSummaryImage);
+      btnExportImage.addEventListener('click', () => {
+        const defaultTitle = `작로그_대국결과_${new Date().toISOString().slice(0, 10)}`;
+        document.getElementById('input-image-title').value = defaultTitle;
+        imageTitleModal.classList.remove('hidden');
+        setTimeout(() => document.getElementById('input-image-title').select(), 50);
+      });
+    }
+
+    const btnCloseImageTitle = document.getElementById('btn-close-image-title');
+    if (btnCloseImageTitle) {
+      btnCloseImageTitle.addEventListener('click', () => imageTitleModal.classList.add('hidden'));
+    }
+
+    const btnCancelImageTitle = document.getElementById('btn-cancel-image-title');
+    if (btnCancelImageTitle) {
+      btnCancelImageTitle.addEventListener('click', () => imageTitleModal.classList.add('hidden'));
+    }
+
+    const btnConfirmImageTitle = document.getElementById('btn-confirm-image-title');
+    if (btnConfirmImageTitle) {
+      btnConfirmImageTitle.addEventListener('click', () => {
+        const titleVal = document.getElementById('input-image-title').value.trim();
+        imageTitleModal.classList.add('hidden');
+        exportMatchSummaryImage(titleVal); // 입력된 제목을 전달하여 이미지 저장
+      });
+    }
     });
   </script>
 </body>
