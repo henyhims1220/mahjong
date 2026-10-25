@@ -1101,9 +1101,10 @@
       umaProfile: 'majsoul_standard',
       // 관리자 전용 [기록용 PW] 및 [삭제용 PW] 초기 해시 (SHA-256) 분리 저장소
       security: {
+        presetVersion: 2,
         recordPwHash: '723954beb7a804dc5671665d5bcc36740c07ffac4d8e4c734b1613a77236dd65',
         deletePwHash: '2a9b83cc5d4dfb58f875c0bc82ff38b6eb6b5d40ca5ad4e8602a1b248fbd6c7a',
-        adminPwHash: '723954beb7a804dc5671665d5bcc36740c07ffac4d8e4c734b1613a77236dd65' // 구버전 호환용
+        adminPwHash: '723954beb7a804dc5671665d5bcc36740c07ffac4d8e4c734b1613a77236dd65'
       },
       players: [
         { id: 0, name: '김작사', score: 25000 },
@@ -1164,17 +1165,20 @@
 
     const DEFAULT_RECORD_PW_HASH = '723954beb7a804dc5671665d5bcc36740c07ffac4d8e4c734b1613a77236dd65';
     const DEFAULT_DELETE_PW_HASH = '2a9b83cc5d4dfb58f875c0bc82ff38b6eb6b5d40ca5ad4e8602a1b248fbd6c7a';
+    const SECURITY_PRESET_VERSION = 2; // 구버전 클라우드/로컬 저장소의 이전 비밀번호를 새 초기 비번(rlfhr / tkrwp)으로 자동 전환
 
     function normalizeSecurityState() {
-      if (!state.security) {
+      if (!state.security || state.security.presetVersion !== SECURITY_PRESET_VERSION) {
         state.security = {
+          presetVersion: SECURITY_PRESET_VERSION,
           recordPwHash: DEFAULT_RECORD_PW_HASH,
           deletePwHash: DEFAULT_DELETE_PW_HASH,
           adminPwHash: DEFAULT_RECORD_PW_HASH
         };
+        saveToSupabase();
       }
       if (!state.security.recordPwHash) {
-        state.security.recordPwHash = state.security.adminPwHash || DEFAULT_RECORD_PW_HASH;
+        state.security.recordPwHash = DEFAULT_RECORD_PW_HASH;
       }
       if (!state.security.deletePwHash) {
         state.security.deletePwHash = DEFAULT_DELETE_PW_HASH;
