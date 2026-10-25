@@ -3952,10 +3952,9 @@
       const isScoreOnly = state.history.length === 0;
       const startScore = getStartingScore();
 
-      // 사용자가 입력한 제목 정리 (비어있으면 기본 이름)
       const displayTitle = (customTitle || '').trim() || `작로그 대국 결과 리포트`;
-      
-       // 1. 임시 렌더링 컨테이너 생성
+
+      // 1. 임시 렌더링 컨테이너 생성
       const wrapper = document.createElement('div');
       wrapper.style.position = 'fixed';
       wrapper.style.top = '-9999px';
@@ -3963,14 +3962,13 @@
       wrapper.style.width = '980px';
       wrapper.style.backgroundColor = '#0b131e';
       wrapper.style.color = '#f1f5f9';
-      wrapper.style.fontFamily = "'Noto Sans KR', sans-serif";
+      wrapper.style.fontFamily = "'Noto Sans KR', 'Inter', sans-serif";
       wrapper.style.padding = '24px 28px';
       wrapper.style.borderRadius = '16px';
       wrapper.style.border = '1px solid #1e293b';
       wrapper.style.boxSizing = 'border-box';
 
-
-     // (1) 상단 순위 카드 HTML 구성 (정렬 및 패딩 수정)
+      // (1) 상단 순위 카드 HTML 구성 (뱃지 높이 및 정렬 안정화)
       const standingsCardsHtml = standings.map(st => {
         const isFirst = st.rank === 1;
         const rankBadgeStyle = isFirst
@@ -3980,18 +3978,16 @@
         const ptColor = st.finalPt >= 0 ? '#10b981' : '#f43f5e';
 
         return `
-          <div style="flex: 1; min-width: 0; background: #0f172a; border-radius: 14px; padding: 14px 16px; ${cardBorder} display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box;">
-            <!-- 1. height: 22px 제거 -->
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
-              <!-- 2. span 뱃지에 display: inline-flex 및 패딩/라인높이 조정 적용 -->
-              <span style="${rankBadgeStyle} font-size: 11px; font-weight: 800; padding: 3px 8px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; line-height: 1;">${st.rank}위</span>
-              <span style="font-size: 15px; font-weight: 800; color: #ffffff; letter-spacing: -0.5px;">${st.name}</span>
+          <div style="flex: 1; min-width: 0; background: #0f172a; border-radius: 14px; padding: 16px; ${cardBorder} display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
+              <span style="${rankBadgeStyle} font-size: 11px; font-weight: 800; padding: 4px 9px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; line-height: 1; text-align: box-center;">${st.rank}위</span>
+              <span style="font-size: 15px; font-weight: 800; color: #ffffff; letter-spacing: -0.5px; line-height: 1.2;">${st.name}</span>
             </div>
-            <div style="font-size: 12px; color: #94a3b8; display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; height: 18px;">
+            <div style="font-size: 12px; color: #94a3b8; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
               <span>최종 점수</span>
               <strong style="color: #ffffff; font-size: 13px; font-weight: 700;">${st.score.toLocaleString()}점</strong>
             </div>
-            <div style="font-size: 12px; color: #94a3b8; display: flex; justify-content: space-between; align-items: center; height: 18px;">
+            <div style="font-size: 12px; color: #94a3b8; display: flex; justify-content: space-between; align-items: center;">
               <span>최종 승점</span>
               <strong style="color: ${ptColor}; font-size: 13px; font-weight: 700;">${st.finalPt >= 0 ? '+' : ''}${st.finalPt} pt</strong>
             </div>
@@ -4032,6 +4028,171 @@
           </tr>
         `;
       }).join('');
+
+      // 전체 레이아웃 조립
+      wrapper.innerHTML = `
+        <!-- 이미지 상단 타이틀 헤더 -->
+        <div style="margin-bottom: 22px; border-bottom: 2px solid #10b981; padding-bottom: 12px; display: flex; align-items: center; justify-content: space-between;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="font-size: 20px; line-height: 1;">🀄</span>
+            <h2 style="font-size: 18px; font-weight: 900; color: #ffffff; margin: 0; letter-spacing: -0.5px; line-height: 1.2;">${displayTitle}</h2>
+          </div>
+          <span style="font-size: 11px; color: #94a3b8; background: #1e293b; padding: 4px 10px; border-radius: 6px; line-height: 1.2;">작로그 (JangLog) 대국 리포트</span>
+        </div>
+
+        <!-- Section 1: 최종 순위 및 우마·오카 포인트 -->
+        <div style="margin-bottom: 20px;">
+          <div style="font-size: 13px; font-weight: 800; color: #fbbf24; margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
+            <span>🏆</span> 최종 순위 및 우마·오카 포인트
+          </div>
+          <div style="display: flex; gap: 10px;">
+            ${standingsCardsHtml}
+          </div>
+        </div>
+
+        <!-- Section 2: 해당 대국 점수 추이 그래프 -->
+        <div style="background: #09101a; border-radius: 14px; border: 1px solid #1e293b; padding: 16px 20px; margin-bottom: 22px; box-sizing: border-box;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <div style="font-size: 13px; font-weight: 800; color: #ffffff; display: flex; align-items: center; gap: 6px;">
+              <span>📈</span> 해당 대국 점수 추이 그래프
+            </div>
+            <span style="font-size: 11px; color: #64748b;">국별 점수 변동</span>
+          </div>
+
+          <!-- 범례 (Legend) - 수직 정렬 및 flex 통일 -->
+          <div style="display: flex; justify-content: center; gap: 20px; margin-bottom: 12px; align-items: center;">
+            ${activePlayers.map((p, idx) => `
+              <div style="display: flex; align-items: center; gap: 6px; font-size: 11px; color: #cbd5e1; font-weight: 600; line-height: 1;">
+                <span style="width: 12px; height: 12px; border-radius: 3px; background: ${PLAYER_COLORS[idx]}; display: inline-block; flex-shrink: 0;"></span>
+                <span style="line-height: 1;">${p.name}</span>
+              </div>
+            `).join('')}
+          </div>
+
+          <!-- 차트 캔버스 -->
+          <div style="position: relative; width: 100%; height: 260px;">
+            <canvas id="temp-summary-export-chart"></canvas>
+          </div>
+        </div>
+
+        <!-- Section 3: 플레이어별 대국 상세 데이터 -->
+        <div>
+          <div style="font-size: 13px; font-weight: 800; color: #38bdf8; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
+            <span>📊</span> 플레이어별 대국 상세 데이터 (화료·평균 타점·리치·방총)
+          </div>
+          <div style="background: #09101a; border-radius: 14px; border: 1px solid #1e293b; overflow: hidden;">
+            <table style="width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 11px;">
+              <colgroup>
+                <col style="width: 17%;">
+                <col style="width: 20%;">
+                <col style="width: 21%;">
+                <col style="width: 14%;">
+                <col style="width: 14%;">
+                <col style="width: 14%;">
+              </colgroup>
+              <thead>
+                <tr style="border-bottom: 1px solid #1e293b; color: #94a3b8; font-weight: 700; height: 38px;">
+                  <th style="padding: 0 14px; text-align: left;">플레이어</th>
+                  <th style="padding: 0 8px; text-align: center; color: #34d399;">화료 횟수 (화료율)</th>
+                  <th style="padding: 0 8px; text-align: center; color: #fbbf24;">평균 화료 타점 (최고)</th>
+                  <th style="padding: 0 8px; text-align: center; color: #f472b6;">리치 횟수 (리치율)</th>
+                  <th style="padding: 0 8px; text-align: center; color: #fb7185;">방총 횟수 (방총률)</th>
+                  <th style="padding: 0 14px; text-align: right; color: #fb7185;">평균 방총 실점</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${statsRowsHtml}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div style="margin-top: 14px; text-align: right; font-size: 10px; color: #475569;">
+          작로그 (JangLog) · ${new Date().toLocaleDateString()} 대국 리포트
+        </div>
+      `;
+
+      document.body.appendChild(wrapper);
+
+      // Chart.js 렌더링
+      const ctx = document.getElementById('temp-summary-export-chart').getContext('2d');
+      const chartLabels = isScoreOnly
+        ? ['대국 시작', '최종 점수']
+        : ['시작', ...state.history.map((h, i) => `${i + 1}. ${h.roundLabel}`)];
+
+      const chartDatasets = activePlayers.map((p, idx) => {
+        const data = isScoreOnly
+          ? [startScore, p.score]
+          : [startScore, ...state.history.map(h => (h.scoresAfter && h.scoresAfter[idx] !== undefined) ? h.scoresAfter[idx] : p.score)];
+        return {
+          label: p.name,
+          data,
+          borderColor: PLAYER_COLORS[idx],
+          backgroundColor: PLAYER_COLORS[idx],
+          tension: 0.28,
+          borderWidth: 3,
+          pointRadius: 4,
+          pointHoverRadius: 4
+        };
+      });
+
+      const tempChart = new Chart(ctx, {
+        type: 'line',
+        data: { labels: chartLabels, datasets: chartDatasets },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: false,
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            x: {
+              ticks: { color: '#94a3b8', font: { size: 10, family: "'Noto Sans KR', sans-serif" } },
+              grid: { color: 'rgba(30, 41, 59, 0.7)' }
+            },
+            y: {
+              ticks: {
+                color: '#94a3b8',
+                font: { size: 10, family: "'Noto Sans KR', sans-serif" },
+                callback: (val) => val.toLocaleString()
+              },
+              grid: { color: 'rgba(30, 41, 59, 0.7)' }
+            }
+          }
+        }
+      });
+
+      // 폰트 및 캔버스 렌더링이 완전히 끝날 때까지 충분히 대기 (글자 잘림 방지 핵심)
+      await new Promise(resolve => setTimeout(resolve, 350));
+
+      try {
+        const canvas = await html2canvas(wrapper, {
+          scale: 2,
+          backgroundColor: '#0b131e',
+          useCORS: true,
+          logging: false
+        });
+
+        tempChart.destroy();
+        document.body.removeChild(wrapper);
+
+        const image = canvas.toDataURL('image/png');
+        const link = document.createElement('a');
+        
+        const safeTitle = (customTitle || '').trim().replace(/[\s\/\\?%*:|"<>]/g, '_');
+        const fileName = safeTitle ? `${safeTitle}.png` : `janglog_match_report_${Date.now()}.png`;
+        
+        link.download = fileName;
+        link.href = image;
+        link.click();
+        showToast('📷 대국 결과 리포트 이미지가 저장되었습니다!');
+      } catch (err) {
+        if (wrapper.parentNode) document.body.removeChild(wrapper);
+        console.error('이미지 생성 오류:', err);
+        showToast('❌ 이미지 생성 중 오류가 발생했습니다.');
+      }
+    }
 
       // 전체 레이아웃 조립 (상단에 입력된 타이틀 헤더 추가)
       wrapper.innerHTML = `
