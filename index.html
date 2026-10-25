@@ -8,8 +8,6 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <!-- Supabase JS SDK 추가 -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <!-- 요약 이미지 캡처/다운로드를 위한 html2canvas SDK 추가 -->
-  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -54,7 +52,6 @@
           <div class="flex items-center gap-2">
             <h1 class="text-lg font-extrabold tracking-tight text-white">작로그 (JangLog)</h1>
             <span id="badge-game-mode" class="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">작혼식 반장전</span>
-            <span id="badge-kiriage-mode" class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-sky-500/20 text-sky-300 border border-sky-500/30">절상만관 적용</span>
           </div>
           <p class="text-xs text-slate-400">실시간 마작 대국 화료 역(Yaku) & 클라우드 실시간 연동 트래커</p>
         </div>
@@ -93,8 +90,8 @@
         <button id="btn-open-settings" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition flex items-center gap-1.5">
           <span>⚙️ 룰/이름 설정</span>
         </button>
-        <button id="btn-open-summary-export-modal" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-emerald-300 border border-slate-700 transition flex items-center gap-1.5">
-          <span>🖼️ 결과 요약 (복사/이미지 다운)</span>
+        <button id="btn-export-summary" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-emerald-300 border border-slate-700 transition flex items-center gap-1.5">
+          <span>📋 결과 요약 복사</span>
         </button>
       </div>
     </div>
@@ -153,7 +150,9 @@
       </div>
 
       <!-- Players Score Grid -->
-      <div id="player-cards-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4"></div>
+      <div id="player-cards-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+        <!-- Populated dynamically via JS -->
+      </div>
 
       <!-- Live Score Trend Chart directly below scoreboard -->
       <div class="bg-slate-900/90 border border-emerald-800/80 rounded-xl p-3 sm:p-4 space-y-2">
@@ -196,7 +195,7 @@
             </div>
           </div>
 
-          <!-- Game Over Banner -->
+          <!-- Game Over Banner (hidden unless isGameOver) -->
           <div id="game-over-banner" class="hidden text-center py-10 px-4 text-amber-400 space-y-3 bg-slate-950/90 rounded-xl border border-amber-500/40">
             <div class="text-3xl">🏆</div>
             <p class="font-bold text-sm sm:text-base">토비 발생 혹은 종국 조건 충족으로 대국이 종료되었습니다!</p>
@@ -225,7 +224,7 @@
               </div>
             </div>
 
-            <!-- Multi-Winner Config Tabs -->
+            <!-- Multi-Winner Config Tabs (더블론/트리플론 시 화료자별 개별 역 설정 탭) -->
             <div id="multi-winner-config-area" class="hidden bg-slate-950/80 p-3.5 rounded-xl border border-emerald-500/40 space-y-3">
               <div class="flex items-center justify-between">
                 <span class="text-xs font-bold text-emerald-300">🀄 화료자별 개별 패(역·후로·도라·부수) 설정</span>
@@ -234,7 +233,7 @@
               <div id="winner-config-tabs" class="flex flex-wrap gap-2"></div>
             </div>
 
-            <!-- Step 1.5: Furo & Quick Score Mode Toggle -->
+            <!-- Step 1.5: Furo (후로 / 울기) Status Toggle & Quick Score Mode Toggle -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div class="bg-slate-950/60 p-3.5 rounded-xl border border-slate-800/80 space-y-2">
                 <div class="flex items-center justify-between">
@@ -253,7 +252,7 @@
                 </div>
               </div>
 
-              <!-- Quick Score-Only Mode -->
+              <!-- Quick Score-Only Mode (역 생략 모드) -->
               <div class="bg-slate-950/60 p-3.5 rounded-xl border border-sky-500/30 space-y-2">
                 <div class="flex items-center justify-between">
                   <label class="text-xs font-semibold text-amber-300 flex items-center gap-1">
@@ -287,7 +286,7 @@
               </div>
             </div>
 
-            <!-- Quick Score Preset Panel -->
+            <!-- Quick Score Preset Panel (Shown when 역 생략(점수만) mode is active) -->
             <div id="quick-score-preset-panel" class="hidden bg-gradient-to-br from-slate-950 to-sky-950/40 p-4 rounded-xl border border-sky-500/40 space-y-3">
               <div class="flex items-center justify-between">
                 <div>
@@ -342,7 +341,9 @@
               </div>
 
               <!-- Yaku Buttons Grid -->
-              <div id="yaku-buttons-container" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 max-h-72 overflow-y-auto pr-1 custom-scrollbar"></div>
+              <div id="yaku-buttons-container" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 max-h-72 overflow-y-auto pr-1 custom-scrollbar">
+                <!-- Populated by JS -->
+              </div>
             </div>
 
             <!-- Step 4: Dora & Fu & Score Calculation Preview -->
@@ -455,7 +456,7 @@
           </div>
         </div>
 
-        <!-- Right Column: Recent Hand Feed -->
+        <!-- Right Column: Recent Hand Feed & Quick Yaku Summary -->
         <div class="lg:col-span-4 space-y-5">
           <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-lg flex flex-col h-full max-h-[720px]">
             <div class="flex items-center justify-between mb-3 pb-2.5 border-b border-slate-800">
@@ -465,13 +466,15 @@
               <span id="feed-count-badge" class="text-xs text-slate-400">0건</span>
             </div>
 
-            <div id="recent-hands-feed" class="flex-1 overflow-y-auto space-y-3 pr-1 custom-scrollbar"></div>
+            <div id="recent-hands-feed" class="flex-1 overflow-y-auto space-y-3 pr-1 custom-scrollbar">
+              <!-- Populated by JS -->
+            </div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- TAB 2: 국별 화료 타임라인 -->
+    <!-- TAB 2: 국별 화료 타임라인 (Full Filterable History) -->
     <section id="view-history" class="hidden space-y-5">
       <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-lg space-y-4">
         <div class="flex flex-wrap items-center justify-between gap-3">
@@ -492,29 +495,36 @@
           </div>
         </div>
 
-        <div id="full-history-list" class="space-y-3"></div>
+        <div id="full-history-list" class="space-y-3">
+          <!-- Populated by JS -->
+        </div>
       </div>
     </section>
 
-    <!-- TAB 3: 플레이어 역 분석 & 작혼식 최종 정산 -->
+    <!-- TAB 3: 플레이어 역 분석 & 작혼식 최종 정산 (Analytics & Uma/Oka Final Calc) -->
     <section id="view-stats" class="hidden space-y-6">
+      <!-- Majsoul Final Rank & Uma/Oka Summary Box -->
       <div class="bg-gradient-to-r from-slate-900 via-slate-900 to-emerald-950 border border-emerald-500/40 rounded-2xl p-5 shadow-xl space-y-4">
         <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
           <div>
             <h3 class="text-base font-bold text-amber-300 flex items-center gap-2">
               <span>🏆 작혼식 최종 정산 (우마 & 오카 포인트)</span>
             </h3>
-            <p class="text-xs text-slate-400 mt-0.5">시작 25,000점 / 반환 30,000점 / 우마 기준 최종 pt 정산</p>
+            <p class="text-xs text-slate-400 mt-0.5">시작 25,000점 / 반환 30,000점 / 우마 (+15, +5, -5, -15) 기준 최종 pt 정산</p>
           </div>
           <div class="text-xs text-slate-400 bg-slate-950 px-3 py-1.5 rounded-lg border border-slate-800">
             정산 공식: <code class="text-emerald-300">((최종점수 - 30,000) / 1,000) + 우마</code>
           </div>
         </div>
-        <div id="majsoul-final-ranking-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3"></div>
+        <div id="majsoul-final-ranking-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <!-- Populated by JS -->
+        </div>
       </div>
 
       <!-- Player Breakdown Cards -->
-      <div id="stats-player-cards" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+      <div id="stats-player-cards" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Populated by JS -->
+      </div>
 
       <!-- Charts Row -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -536,7 +546,7 @@
       </div>
     </section>
 
-    <!-- TAB: 👤 플레이어별 기록실 -->
+    <!-- NEW TAB: 👤 플레이어별 기록실 (Player Personal Profile & Detailed Analytics) -->
     <section id="view-player" class="hidden space-y-6">
       <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-lg space-y-5">
         <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800 pb-4">
@@ -559,9 +569,11 @@
         </div>
 
         <!-- Player Selector Pills -->
-        <div id="player-profile-selector" class="flex flex-wrap gap-2"></div>
+        <div id="player-profile-selector" class="flex flex-wrap gap-2">
+          <!-- Populated by JS -->
+        </div>
 
-        <!-- Notice -->
+        <!-- Notice about Score-Only vs Hand-Recorded Stats Separation -->
         <div class="bg-slate-950/90 border border-sky-500/30 rounded-xl px-4 py-2.5 flex flex-wrap items-center justify-between gap-2 text-xs">
           <div class="text-slate-300">
             💡 <strong>스마트 분리 집계 안내:</strong> 역을 기록하지 않고 <strong>최종 점수만 입력한 대국</strong>은 <span class="text-amber-300">대국 순위·연대율·누적 Pt</span>에만 반영되며, <span class="text-emerald-300">화료율·리치율·방총률</span>은 실제 국 기록이 있는 국수만을 분모로 계산해 통계가 왜곡되지 않습니다.
@@ -570,19 +582,27 @@
         </div>
 
         <!-- 8 Core Stat Cards -->
-        <div id="player-profile-kpi-grid" class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3"></div>
+        <div id="player-profile-kpi-grid" class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
+          <!-- Populated by JS -->
+        </div>
 
         <!-- Rank Distribution & Win Style Breakdown -->
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+          <!-- Left: Rank Distribution & Pt Summary -->
           <div class="lg:col-span-5 bg-slate-950/70 border border-slate-800 rounded-xl p-4 space-y-4">
             <div class="flex items-center justify-between">
               <h3 class="text-sm font-bold text-amber-300">🏅 대국 순위 분포 & 연대 지표</h3>
               <span id="profile-games-badge" class="text-xs text-slate-400">0대국</span>
             </div>
-            <div id="profile-rank-bars" class="space-y-2.5"></div>
-            <div id="profile-win-style-box" class="pt-3 border-t border-slate-800 space-y-2"></div>
+            <div id="profile-rank-bars" class="space-y-2.5">
+              <!-- Populated by JS -->
+            </div>
+            <div id="profile-win-style-box" class="pt-3 border-t border-slate-800 space-y-2">
+              <!-- Populated by JS -->
+            </div>
           </div>
 
+          <!-- Right: Favorite Yaku Collection & Frequency -->
           <div class="lg:col-span-7 bg-slate-950/70 border border-slate-800 rounded-xl p-4 space-y-4 flex flex-col justify-between">
             <div>
               <div class="flex items-center justify-between mb-3">
@@ -592,30 +612,39 @@
                 </div>
                 <span id="profile-yaku-variety-badge" class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">0종 달성</span>
               </div>
-              <div id="profile-yaku-badges-list" class="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-60 overflow-y-auto pr-1 custom-scrollbar"></div>
+              <div id="profile-yaku-badges-list" class="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-60 overflow-y-auto pr-1 custom-scrollbar">
+                <!-- Populated by JS -->
+              </div>
             </div>
 
-            <div id="profile-best-hand-banner" class="bg-slate-900 p-3 rounded-xl border border-slate-800 text-xs text-slate-300"></div>
+            <div id="profile-best-hand-banner" class="bg-slate-900 p-3 rounded-xl border border-slate-800 text-xs text-slate-300">
+              <!-- Populated by JS -->
+            </div>
           </div>
         </div>
 
-        <!-- Logs -->
+        <!-- Player Hand History & Match History -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 pt-2">
           <div class="bg-slate-950/70 border border-slate-800 rounded-xl p-4 space-y-3">
             <h3 class="text-sm font-bold text-white">⚡ 이 플레이어의 화료 & 방총 기록 로그</h3>
-            <div id="profile-hand-logs" class="space-y-2 max-h-80 overflow-y-auto pr-1 custom-scrollbar"></div>
+            <div id="profile-hand-logs" class="space-y-2 max-h-80 overflow-y-auto pr-1 custom-scrollbar">
+              <!-- Populated by JS -->
+            </div>
           </div>
 
           <div class="bg-slate-950/70 border border-slate-800 rounded-xl p-4 space-y-3">
             <h3 class="text-sm font-bold text-white">📁 이 플레이어의 대국별 최종 성적 이력 (클릭 시 대국 상세 분석)</h3>
-            <div id="profile-match-logs" class="space-y-2 max-h-80 overflow-y-auto pr-1 custom-scrollbar"></div>
+            <div id="profile-match-logs" class="space-y-2 max-h-80 overflow-y-auto pr-1 custom-scrollbar">
+              <!-- Populated by JS -->
+            </div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- TAB: 월별 & 역대 기록 -->
+    <!-- TAB: 월별 & 역대 기록 (Monthly & All-time Records) -->
     <section id="view-monthly" class="hidden space-y-6">
+      <!-- All-Time Records Overview Cards -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-lg space-y-1">
           <div class="text-xs text-slate-400">누적 기록된 국수 (아카이브 포함)</div>
@@ -639,6 +668,7 @@
         </div>
       </div>
 
+      <!-- Majsoul Style Advanced Player Leaderboard Table -->
       <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-lg space-y-4">
         <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
           <div>
@@ -667,13 +697,15 @@
                 <th class="p-3 text-right">누적 Pt</th>
               </tr>
             </thead>
-            <tbody id="leaderboard-table-body" class="divide-y divide-slate-800/80"></tbody>
+            <tbody id="leaderboard-table-body" class="divide-y divide-slate-800/80">
+              <!-- Populated by JS -->
+            </tbody>
           </table>
         </div>
       </div>
     </section>
 
-    <!-- TAB: 대국 아카이브 -->
+    <!-- TAB: 대국 아카이브 (Archive) -->
     <section id="view-archive" class="hidden space-y-6">
       <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-lg space-y-4">
         <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
@@ -681,7 +713,7 @@
             <h2 class="text-base sm:text-lg font-bold text-amber-300 flex items-center gap-2">
               <span>📁 저장된 대국 아카이브 목록</span>
             </h2>
-            <p class="text-xs text-slate-400 mt-0.5">[📈 상세 분석 & 점수 그래프 보기]를 누르면 해당 대국의 점수 추이 그래프, 평균 타점, 리치/방총/화료 횟수를 모두 볼 수 있습니다.</p>
+            <p class="text-xs text-slate-400 mt-0.5">[📈 상세 분석 & 점수 그래프 보기]를 누르면 해당 대국의 점수 추이 그래프, 평균 타점, 리치·방총·화료 횟수를 모두 볼 수 있습니다.</p>
           </div>
           <div class="flex items-center gap-2">
             <button type="button" id="btn-archive-quick-score" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-sky-500 hover:bg-sky-400 text-slate-950 transition">
@@ -693,13 +725,15 @@
           </div>
         </div>
 
-        <div id="archive-list-container" class="space-y-3"></div>
+        <div id="archive-list-container" class="space-y-3">
+          <!-- Populated by JS -->
+        </div>
       </div>
     </section>
 
   </main>
 
-  <!-- PASSWORD MODAL -->
+  <!-- NEW MODAL 0: 🔒 기록용 PW & 삭제용 PW 분리 인증 및 나만의 마스터 PW 관리 모달 -->
   <div id="modal-auth-pw" class="fixed inset-0 z-50 hidden bg-slate-950/90 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-rose-500/50 rounded-2xl max-w-md w-full p-5 shadow-2xl space-y-4">
       <div class="flex items-center justify-between border-b border-slate-800 pb-3">
@@ -712,7 +746,7 @@
         <button type="button" id="btn-close-auth-modal" class="text-slate-400 hover:text-white text-sm font-bold px-2 py-1">✕</button>
       </div>
 
-      <!-- Panel A: Dual PW Setup -->
+      <!-- Panel A: First-time Owner Dual PW Setup (Record PW & Delete PW) -->
       <div id="auth-setup-panel" class="hidden space-y-3">
         <div class="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 text-xs text-amber-200 space-y-1">
           <div class="font-bold">👑 최초 관리자(본인) [기록 PW] & [삭제 PW] 분리 설정</div>
@@ -723,7 +757,7 @@
           <input id="input-setup-record-pw" type="password" placeholder="기록용 PW 입력 (2자 이상)" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500" />
         </div>
         <div class="space-y-2 bg-slate-950/70 p-3 rounded-xl border border-rose-500/30">
-          <label for="input-setup-delete-pw" class="block text-xs font-bold text-rose-300">2️⃣ 삭제용 비밀번호 (기록 삭제·직전 취소·초기화 시 사용)</label>
+          <label for="input-setup-delete-pw" class="block text-xs font-bold text-rose-300">2️⃣ 삭제용 비밀번호 (기록 삭제·직전 취소·초기화 시 사용 — 기록 PW와 다르게 설정 가능)</label>
           <input id="input-setup-delete-pw" type="password" placeholder="삭제용 PW 입력 (기록 PW와 다르게 설정 권장)" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-rose-500" />
         </div>
         <div id="auth-setup-error" class="text-xs text-rose-400 font-semibold hidden"></div>
@@ -733,7 +767,7 @@
         </div>
       </div>
 
-      <!-- Panel B: Enter PW -->
+      <!-- Panel B: Enter PW to Unlock / Execute Action -->
       <div id="auth-verify-panel" class="space-y-3">
         <div id="auth-verify-mode-banner" class="p-2.5 rounded-xl border text-xs font-bold flex items-center justify-between bg-emerald-500/10 border-emerald-500/30 text-emerald-300">
           <span id="auth-verify-mode-label">📝 기록 권한 비밀번호(기록 PW) 입력</span>
@@ -762,7 +796,7 @@
         </div>
       </div>
 
-      <!-- Panel C: Change PW -->
+      <!-- Panel C: Change PW (Requires Current Record PW or Delete PW) -->
       <div id="auth-change-panel" class="hidden space-y-3 pt-2 border-t border-slate-800">
         <div class="text-xs font-bold text-amber-300">🔑 비밀번호 변경 (기존 기록 PW 또는 삭제 PW 인증 필수)</div>
         <div>
@@ -788,7 +822,7 @@
     </div>
   </div>
 
-  <!-- MODAL: 최종 점수만 입력 -->
+  <!-- NEW MODAL 1: 🏁 최종 점수만 입력 (간편 대국 결과 등록 / 종국) -->
   <div id="modal-final-score" class="fixed inset-0 z-50 hidden bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-sky-500/50 rounded-2xl max-w-lg w-full p-5 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
       <div class="flex items-center justify-between border-b border-slate-800 pb-3">
@@ -807,7 +841,9 @@
         <p class="text-[11px] text-slate-400">💡 4위 점수는 <button type="button" id="btn-auto-fill-4th" class="text-sky-300 underline font-semibold hover:text-sky-200">[남은 점수 자동 채우기]</button>를 누르면 100,000점에 맞춰 자동 계산됩니다.</p>
       </div>
 
-      <div id="final-score-inputs-container" class="space-y-2.5"></div>
+      <div id="final-score-inputs-container" class="space-y-2.5">
+        <!-- Populated by JS -->
+      </div>
 
       <div>
         <label for="input-final-score-memo" class="block text-xs text-slate-400 mb-1">대국 한줄 메모 / 기억나는 하이라이트 역 (선택)</label>
@@ -831,7 +867,7 @@
     </div>
   </div>
 
-  <!-- MODAL: 중간 점수/국 보정 -->
+  <!-- NEW MODAL 2: 🔧 중간 점수/국 보정 (Sync Board State) -->
   <div id="modal-sync-board" class="fixed inset-0 z-50 hidden bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-5 shadow-2xl space-y-4">
       <div class="flex items-center justify-between border-b border-slate-800 pb-3">
@@ -869,7 +905,9 @@
         </div>
       </div>
 
-      <div id="sync-players-score-inputs" class="space-y-2 pt-2 border-t border-slate-800"></div>
+      <div id="sync-players-score-inputs" class="space-y-2 pt-2 border-t border-slate-800">
+        <!-- Populated by JS -->
+      </div>
 
       <div class="flex justify-end gap-2 pt-3 border-t border-slate-800">
         <button type="button" id="btn-cancel-sync-board" class="px-4 py-2 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700">취소</button>
@@ -878,7 +916,7 @@
     </div>
   </div>
 
-  <!-- Archive Save Memo Modal -->
+  <!-- Archive Save Memo Modal (Replaces native prompt) -->
   <div id="modal-archive-save" class="fixed inset-0 z-50 hidden bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-5 shadow-2xl space-y-4">
       <div class="flex items-center justify-between border-b border-slate-800 pb-3">
@@ -896,7 +934,7 @@
     </div>
   </div>
 
-  <!-- UPGRADED Archive Detail Modal -->
+  <!-- UPGRADED Archive Detail Modal (With Score Graph & Player Stats Breakdown) -->
   <div id="modal-archive-detail" class="fixed inset-0 z-50 hidden bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
     <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-4xl w-full p-4 sm:p-6 shadow-2xl space-y-4 max-h-[90vh] flex flex-col">
       <div class="flex items-center justify-between border-b border-slate-800 pb-3">
@@ -908,8 +946,10 @@
       </div>
 
       <div class="flex-1 overflow-y-auto space-y-5 pr-1 custom-scrollbar text-xs">
+        <!-- 1. Final Standings -->
         <div id="modal-archive-standings-section" class="space-y-2"></div>
 
+        <!-- 2. Score Trend Chart inside Archive Detail -->
         <div class="bg-slate-950/90 border border-slate-800 rounded-xl p-4 space-y-2">
           <div class="flex items-center justify-between">
             <h4 class="font-bold text-emerald-300 text-xs sm:text-sm">📈 해당 대국 점수 추이 그래프</h4>
@@ -920,7 +960,10 @@
           </div>
         </div>
 
+        <!-- 3. Per-Player Detailed Stats Table (Wins, Avg Score, Riichi Count, Deal-in Count) -->
         <div id="modal-archive-player-stats-section" class="space-y-2"></div>
+
+        <!-- 4. Hand-by-Hand Timeline -->
         <div id="modal-archive-content" class="space-y-2"></div>
       </div>
 
@@ -933,70 +976,7 @@
     </div>
   </div>
 
-  <!-- NEW MODAL: 대국 요약 및 이미지 다운로드 / 텍스트 복사 모달 -->
-  <div id="modal-summary-export" class="fixed inset-0 z-50 hidden bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-slate-900 border border-emerald-500/50 rounded-2xl max-w-xl w-full p-5 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
-      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-        <div>
-          <h3 class="text-base font-extrabold text-white flex items-center gap-2">
-            <span>🖼️ 대국 결과 요약 카드 & 이미지 다운로드</span>
-          </h3>
-          <p class="text-[11px] text-slate-400 mt-0.5">대국 결과를 예쁜 카드 이미지(PNG)로 저장하거나 텍스트로 복사할 수 있습니다.</p>
-        </div>
-        <button type="button" id="btn-close-summary-export-modal" class="text-slate-400 hover:text-white text-sm font-bold px-2 py-1">✕</button>
-      </div>
-
-      <!-- 다운로드 대상이 되는 깔끔한 요약 카드 영역 (html2canvas 캡처 타깃) -->
-      <div id="capture-summary-card" class="bg-slate-950 rounded-2xl p-5 border border-slate-800 space-y-4 shadow-inner">
-        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-          <div class="flex items-center gap-2.5">
-            <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-700 flex items-center justify-center text-lg font-bold shadow">
-              🀄
-            </div>
-            <div>
-              <div class="text-sm font-black text-white flex items-center gap-1.5">
-                <span>작로그 대국 정산표</span>
-                <span id="export-card-rule-badge" class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">절상만관</span>
-              </div>
-              <div id="export-card-date" class="text-[10px] text-slate-400"></div>
-            </div>
-          </div>
-          <div class="text-right text-[11px] text-slate-400">
-            <div id="export-card-round-info" class="font-bold text-amber-300">총 0국 진행</div>
-            <div id="export-card-mode-info" class="text-[10px]">반장전 / 작혼 표준</div>
-          </div>
-        </div>
-
-        <!-- 4인 순위 그리드 -->
-        <div id="export-card-rankings" class="grid grid-cols-2 gap-2 text-xs"></div>
-
-        <!-- 주요 화료 하이라이트 -->
-        <div class="space-y-1.5 pt-1">
-          <div class="text-[11px] font-bold text-slate-400 flex items-center gap-1">
-            <span>⚡ 주요 화료 하이라이트</span>
-          </div>
-          <div id="export-card-hands-list" class="space-y-1 text-xs max-h-48 overflow-y-auto pr-1 custom-scrollbar"></div>
-        </div>
-
-        <div class="pt-2 border-t border-slate-900 flex justify-between items-center text-[10px] text-slate-500">
-          <span>기록 도구: 작로그 (JangLog)</span>
-          <span>© Mahjong Tracker</span>
-        </div>
-      </div>
-
-      <!-- 액션 버튼들 -->
-      <div class="flex flex-wrap items-center justify-end gap-2 pt-2 border-t border-slate-800">
-        <button type="button" id="btn-copy-summary-text" class="px-3.5 py-2 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 transition flex items-center gap-1">
-          <span>📋 텍스트 복사</span>
-        </button>
-        <button type="button" id="btn-download-summary-image" class="px-4 py-2 rounded-lg text-xs font-bold bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 transition flex items-center gap-1.5 shadow">
-          <span>📷 요약 이미지(PNG) 다운로드</span>
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Settings Modal (절상만관 선택 UI 포함) -->
+  <!-- Settings Modal -->
   <div id="modal-settings" class="fixed inset-0 z-50 hidden bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-5 shadow-2xl space-y-4">
       <div class="flex items-center justify-between border-b border-slate-800 pb-3">
@@ -1022,16 +1002,6 @@
             <option value="m_league">M리그 방식 (+50, +10, -10, -30)</option>
             <option value="flat">우마 없음 (순수 점수 환산)</option>
           </select>
-        </div>
-
-        <!-- 절상만관(切り上げ満貫) 선택 옵션 -->
-        <div>
-          <label for="setting-kiriage" class="block text-xs font-semibold text-slate-300 mb-1">절상만관(切り上げ満貫) 적용 여부</label>
-          <select id="setting-kiriage" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white">
-            <option value="true">적용 (작혼/M리그식: 4판 30부·3판 60부 = 만관 8,000점)</option>
-            <option value="false">미적용 (일반식: 4판 30부·3판 60부 = 7,700점/11,600점)</option>
-          </select>
-          <p class="text-[10px] text-slate-400 mt-1">미적용 시 4판 30부 자 화료는 7,700점(친 11,600점)으로 계산됩니다.</p>
         </div>
 
         <div class="space-y-2 pt-2">
@@ -1129,11 +1099,12 @@
     let state = {
       gameMode: '4p_hanchan',
       umaProfile: 'majsoul_standard',
-      kiriageMangan: true, // 절상만관 옵션 (기본값: true)
+      // 관리자 전용 [기록용 PW] 및 [삭제용 PW] 초기 해시 (SHA-256) 분리 저장소
       security: {
-        recordPwHash: null,
-        deletePwHash: null,
-        adminPwHash: null
+        presetVersion: 2,
+        recordPwHash: '723954beb7a804dc5671665d5bcc36740c07ffac4d8e4c734b1613a77236dd65',
+        deletePwHash: '2a9b83cc5d4dfb58f875c0bc82ff38b6eb6b5d40ca5ad4e8602a1b248fbd6c7a',
+        adminPwHash: '723954beb7a804dc5671665d5bcc36740c07ffac4d8e4c734b1613a77236dd65'
       },
       players: [
         { id: 0, name: '김작사', score: 25000 },
@@ -1182,27 +1153,35 @@
       viewingArchiveId: null
     };
 
+    // 로컬 기기 세션의 인증 상태 (클라우드에 공유하지 않고 내 기기에만 유지!)
     let isRecordAuthorizedSession = false;
     let pendingProtectedAction = null;
-    let currentAuthMode = 'record';
+    let currentAuthMode = 'record'; // 'record' | 'delete'
 
     let liveTrendChartInstance = null;
     let scoreChartInstance = null;
     let yakuChartInstance = null;
     let archiveDetailChartInstance = null;
 
+    const DEFAULT_RECORD_PW_HASH = '723954beb7a804dc5671665d5bcc36740c07ffac4d8e4c734b1613a77236dd65';
+    const DEFAULT_DELETE_PW_HASH = '2a9b83cc5d4dfb58f875c0bc82ff38b6eb6b5d40ca5ad4e8602a1b248fbd6c7a';
+    const SECURITY_PRESET_VERSION = 2; // 구버전 클라우드/로컬 저장소의 이전 비밀번호를 새 초기 비번(rlfhr / tkrwp)으로 자동 전환
+
     function normalizeSecurityState() {
-      if (!state.security) {
-        state.security = { recordPwHash: null, deletePwHash: null, adminPwHash: null };
+      if (!state.security || state.security.presetVersion !== SECURITY_PRESET_VERSION) {
+        state.security = {
+          presetVersion: SECURITY_PRESET_VERSION,
+          recordPwHash: DEFAULT_RECORD_PW_HASH,
+          deletePwHash: DEFAULT_DELETE_PW_HASH,
+          adminPwHash: DEFAULT_RECORD_PW_HASH
+        };
+        saveToSupabase();
       }
-      if (!state.security.recordPwHash && state.security.adminPwHash) {
-        state.security.recordPwHash = state.security.adminPwHash;
+      if (!state.security.recordPwHash) {
+        state.security.recordPwHash = DEFAULT_RECORD_PW_HASH;
       }
-      if (!state.security.deletePwHash && state.security.adminPwHash) {
-        state.security.deletePwHash = state.security.adminPwHash;
-      }
-      if (state.kiriageMangan === undefined) {
-        state.kiriageMangan = true;
+      if (!state.security.deletePwHash) {
+        state.security.deletePwHash = DEFAULT_DELETE_PW_HASH;
       }
     }
 
@@ -1211,6 +1190,7 @@
       return Boolean(state.security.recordPwHash && state.security.deletePwHash);
     }
 
+    // --- PASSWORD HASHING & DUAL AUTH GATE (RECORD PW vs DELETE PW) ---
     async function hashPassword(plainText) {
       const msgBuffer = new TextEncoder().encode('janglog_salt_v1_' + plainText);
       const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
@@ -1313,6 +1293,7 @@
     }
 
     function requireDeleteAuth(actionCallback) {
+      // 삭제/취소/초기화 동작은 기록 세션이 열려 있어도 항상 삭제 전용 PW를 확인!
       openAuthModal(actionCallback, 'delete');
     }
 
@@ -1367,7 +1348,7 @@
         if (data && data.state_data) {
           state = Object.assign(state, data.state_data);
           if (!Array.isArray(state.archives)) state.archives = [];
-          normalizeSecurityState();
+          if (!state.security) state.security = { adminPwHash: null };
           renderAll();
           showToast('☁️ 클라우드에서 최신 기록을 불러왔습니다!');
           return true;
@@ -1452,7 +1433,6 @@
       return calculated;
     }
 
-    // 절상만관 옵션이 반영된 점수 계산 함수
     function calculateSingleHandScore(winnerId, config) {
       const isDealer = (winnerId === (state.roundNum % getPlayerCount()));
       const isFuro = config.isFuro;
@@ -1530,8 +1510,6 @@
       let basicPoints = 0;
       let tierName = `${totalHan}판 ${fu}부`;
 
-      const isKiriage = state.kiriageMangan !== false;
-
       if (hasYakuman || totalHan >= 13) {
         basicPoints = 8000;
         tierName = hasYakuman ? '역만 (Yakuman)' : '헤아림 역만 (13판+)';
@@ -1548,13 +1526,8 @@
         basicPoints = 2000;
         tierName = '만관 (Mangan)';
       } else if ((totalHan === 4 && fu === 30) || (totalHan === 3 && fu === 60)) {
-        if (isKiriage) {
-          basicPoints = 2000;
-          tierName = '절상만관 (Kiriage Mangan)';
-        } else {
-          basicPoints = fu * Math.pow(2, totalHan + 2); // 1920 (비절상)
-          tierName = `${totalHan}판 ${fu}부`;
-        }
+        basicPoints = 2000;
+        tierName = '절상만관 (Kiriage Mangan)';
       } else {
         basicPoints = fu * Math.pow(2, totalHan + 2);
         if (basicPoints >= 2000) {
@@ -1724,7 +1697,6 @@
     function loadSampleMatch() {
       state.gameMode = '4p_hanchan';
       state.umaProfile = 'majsoul_standard';
-      state.kiriageMangan = true;
       state.players = [
         { id: 0, name: '김작사', score: 36500 },
         { id: 1, name: '이리치', score: 28400 },
@@ -1836,6 +1808,102 @@
         }
       ];
 
+      if (!Array.isArray(state.archives) || state.archives.length === 0) {
+        state.archives = [
+          {
+            id: 'arch_demo_detailed',
+            dateStr: '2026. 10. 24. 오후 10:15:00',
+            memo: '주말 정기전 1차전 (상세 기록 대국)',
+            recordType: 'detailed',
+            gameMode: '4p_hanchan',
+            umaProfile: 'majsoul_standard',
+            standings: [
+              { id: 0, name: '김작사', score: 38200, rank: 1, rawPt: 8.2, uma: 15, finalPt: 23.2 },
+              { id: 1, name: '이리치', score: 29100, rank: 2, rawPt: -0.9, uma: 5, finalPt: 4.1 },
+              { id: 2, name: '박멘젠', score: 21700, rank: 3, rawPt: -8.3, uma: -5, finalPt: -13.3 },
+              { id: 3, name: '최탕야오', score: 11000, rank: 4, rawPt: -19.0, uma: -15, finalPt: -34.0 }
+            ],
+            players: [
+              { id: 0, name: '김작사', score: 38200 },
+              { id: 1, name: '이리치', score: 29100 },
+              { id: 2, name: '박멘젠', score: 21700 },
+              { id: 3, name: '최탕야오', score: 11000 }
+            ],
+            history: [
+              {
+                id: 'ah1',
+                roundLabel: '동 1국',
+                honba: 0,
+                outcome: 'ron',
+                riichiPlayerIds: [0, 2],
+                winnerHands: [{ winnerId: 0, isFuro: false, yakuNames: ['리치', '탕야오', '핑후 (평화)'], totalHan: 4, fu: 30, tierName: '절상만관', baseHandScore: 12000, totalGain: 13000 }],
+                loserId: 2,
+                memo: '김작사 맞리치 승리',
+                totalGain: 13000,
+                scoresAfter: [37000, 25000, 12000, 25000]
+              },
+              {
+                id: 'ah2',
+                roundLabel: '동 1국',
+                honba: 1,
+                outcome: 'tsumo',
+                riichiPlayerIds: [1],
+                winnerHands: [{ winnerId: 1, isFuro: false, yakuNames: ['리치', '멘젠쯔모', '삼색동순'], totalHan: 4, fu: 30, tierName: '절상만관', baseHandScore: 8000, totalGain: 8300 }],
+                loserId: null,
+                memo: '이리치 삼색 쯔모',
+                totalGain: 8300,
+                scoresAfter: [32900, 32300, 9900, 22900]
+              },
+              {
+                id: 'ah3',
+                roundLabel: '동 2국',
+                honba: 0,
+                outcome: 'ron',
+                riichiPlayerIds: [3],
+                winnerHands: [{ winnerId: 2, isFuro: true, yakuNames: ['혼일색', '역패: 중(中)'], totalHan: 5, fu: 30, tierName: '만관 (Mangan)', baseHandScore: 8000, totalGain: 9000 }],
+                loserId: 3,
+                memo: '박멘젠 중·혼일색 직격',
+                totalGain: 9000,
+                scoresAfter: [32900, 32300, 18900, 13900]
+              },
+              {
+                id: 'ah4',
+                roundLabel: '동 3국',
+                honba: 0,
+                outcome: 'ron',
+                riichiPlayerIds: [0],
+                winnerHands: [{ winnerId: 0, isFuro: false, yakuNames: ['리치', '치또이츠'], totalHan: 4, fu: 25, tierName: '4판 25부', baseHandScore: 6400, totalGain: 6400 }],
+                loserId: 3,
+                memo: '김작사 치또이츠 다마→리치 전환 성공',
+                totalGain: 6400,
+                scoresAfter: [38200, 29100, 21700, 11000]
+              }
+            ]
+          },
+          {
+            id: 'arch_demo_score_only',
+            dateStr: '2026. 10. 24. 오후 11:10:00',
+            memo: '주말 정기전 2차전 (최종 점수만 입력)',
+            recordType: 'score_only',
+            gameMode: '4p_hanchan',
+            umaProfile: 'majsoul_standard',
+            standings: [
+              { id: 1, name: '이리치', score: 42500, rank: 1, rawPt: 12.5, uma: 15, finalPt: 27.5 },
+              { id: 0, name: '김작사', score: 28500, rank: 2, rawPt: -1.5, uma: 5, finalPt: 3.5 },
+              { id: 2, name: '박멘젠', score: 19000, rank: 3, rawPt: -11.0, uma: -5, finalPt: -16.0 },
+              { id: 3, name: '최탕야오', score: 10000, rank: 4, rawPt: -20.0, uma: -15, finalPt: -35.0 }
+            ],
+            history: [],
+            players: [
+              { id: 0, name: '김작사', score: 28500 },
+              { id: 1, name: '이리치', score: 42500 },
+              { id: 2, name: '박멘젠', score: 19000 },
+              { id: 3, name: '최탕야오', score: 10000 }
+            ]
+          }
+        ];
+      }
+
       saveToStorage();
       renderAll();
       showToast('✨ 샘플 대국 및 아카이브 데이터가 로드되었습니다!');
@@ -1891,7 +1959,6 @@
         recordType,
         gameMode: state.gameMode,
         umaProfile: state.umaProfile,
-        kiriageMangan: state.kiriageMangan !== false,
         standings: standings,
         history: JSON.parse(JSON.stringify(state.history)),
         players: JSON.parse(JSON.stringify(state.players))
@@ -1911,16 +1978,6 @@
         '3p_hanchan': '3인 반장전 (삼마)'
       };
       document.getElementById('badge-game-mode').textContent = modeLabels[state.gameMode] || '작혼식 반장전';
-      
-      const kiriageBadge = document.getElementById('badge-kiriage-mode');
-      if (state.kiriageMangan !== false) {
-        kiriageBadge.textContent = '절상만관 적용';
-        kiriageBadge.className = 'text-[11px] font-semibold px-2 py-0.5 rounded-full bg-sky-500/20 text-sky-300 border border-sky-500/30';
-      } else {
-        kiriageBadge.textContent = '절상만관 미적용';
-        kiriageBadge.className = 'text-[11px] font-semibold px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700';
-      }
-
       document.getElementById('display-round-name').textContent = state.isGameOver ? '대국 종료 (정산완료)' : getRoundLabel(state.roundWind, state.roundNum % pCount);
       document.getElementById('display-honba').textContent = `${state.honba}본장`;
       document.getElementById('display-riichi-pot').textContent = state.riichiPot;
@@ -3176,3 +3233,1315 @@
           responsive: true,
           maintainAspectRatio: false,
           plugins: {
+            legend: { labels: { color: '#cbd5e1', font: { size: 11 } } }
+          },
+          scales: {
+            x: { ticks: { color: '#94a3b8', font: { size: 10 } }, grid: { color: '#1e293b' } },
+            y: { ticks: { color: '#94a3b8', font: { size: 10 } }, grid: { color: '#1e293b' } }
+          }
+        }
+      });
+
+      const globalYakuMap = {};
+      state.history.forEach(h => {
+        (h.winnerHands || []).forEach(wh => {
+          (wh.yakuNames || []).forEach(yn => {
+            if (!yn.includes('역 미기재')) {
+              globalYakuMap[yn] = (globalYakuMap[yn] || 0) + 1;
+            }
+          });
+        });
+      });
+      const sortedYaku = Object.entries(globalYakuMap).sort((a, b) => b[1] - a[1]).slice(0, 8);
+
+      const ctxYaku = document.getElementById('chart-yaku-freq').getContext('2d');
+      if (yakuChartInstance) yakuChartInstance.destroy();
+      yakuChartInstance = new Chart(ctxYaku, {
+        type: 'bar',
+        data: {
+          labels: sortedYaku.length ? sortedYaku.map(e => e[0]) : ['기록 없음'],
+          datasets: [{
+            label: '출현 횟수(회)',
+            data: sortedYaku.length ? sortedYaku.map(e => e[1]) : [0],
+            backgroundColor: '#10b981',
+            borderRadius: 6
+          }]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            x: { beginAtZero: true, ticks: { stepSize: 1, color: '#94a3b8' }, grid: { color: '#1e293b' } },
+            y: { ticks: { color: '#e2e8f0', font: { size: 11 } }, grid: { display: false } }
+          }
+        }
+      });
+    }
+
+    function renderMonthlyStatsAndChart() {
+      const statsMap = computeAggregatedPlayerStats('all');
+      const playerList = Object.values(statsMap).sort((a, b) => b.totalPt - a.totalPt);
+
+      const leaderboardBody = document.getElementById('leaderboard-table-body');
+      leaderboardBody.innerHTML = '';
+
+      playerList.forEach((pStat, idx) => {
+        const rankNum = idx + 1;
+        const matchesG = pStat.matchesCount > 0 ? pStat.matchesCount : 1;
+        const handsG = pStat.recordedHands > 0 ? pStat.recordedHands : 1;
+
+        const firstRate = ((pStat.ranks[0] / matchesG) * 100).toFixed(1);
+        const top2Rate = (((pStat.ranks[0] + pStat.ranks[1]) / matchesG) * 100).toFixed(1);
+        const avoid4thRate = (((pStat.ranks[0] + pStat.ranks[1] + pStat.ranks[2]) / matchesG) * 100).toFixed(1);
+        const winRate = pStat.recordedHands > 0 ? ((pStat.wins / handsG) * 100).toFixed(1) : '0.0';
+        const riichiRate = pStat.recordedHands > 0 ? ((pStat.riichiCount / handsG) * 100).toFixed(1) : '0.0';
+        const dealInRate = pStat.recordedHands > 0 ? ((pStat.dealIns / handsG) * 100).toFixed(1) : '0.0';
+
+        const avgWinScore = pStat.wins > 0 ? Math.round(pStat.winScoreSum / pStat.wins) : 0;
+        const avgDealInScore = pStat.dealIns > 0 ? Math.round(pStat.dealInScoreSum / pStat.dealIns) : 0;
+
+        const rankColors = rankNum === 1 ? 'text-amber-400 font-bold' : rankNum === 2 ? 'text-slate-200 font-bold' : rankNum === 3 ? 'text-amber-600 font-semibold' : 'text-rose-400 font-semibold';
+
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-950/60 transition cursor-pointer';
+        tr.title = `${pStat.name}의 개인 기록실 열기`;
+        tr.addEventListener('click', () => {
+          state.selectedProfileName = pStat.name;
+          switchTab('player');
+        });
+
+        tr.innerHTML = `
+          <td class="p-3 text-center ${rankColors}">${rankNum}위</td>
+          <td class="p-3 font-bold text-white flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full" style="background:${pStat.color}"></span>
+            <span class="underline decoration-slate-600 hover:decoration-emerald-400">${pStat.name}</span>
+          </td>
+          <td class="p-3 text-center text-slate-300">${pStat.matchesCount}대국 <span class="text-[10px] text-slate-500">(${pStat.recordedHands}국)</span></td>
+          <td class="p-3 text-center text-amber-300 font-semibold">${firstRate}% <span class="text-[10px] text-slate-400">(${pStat.ranks[0]})</span></td>
+          <td class="p-3 text-center text-emerald-300 font-semibold">${top2Rate}% <span class="text-[10px] text-slate-400">(${pStat.ranks[0] + pStat.ranks[1]})</span></td>
+          <td class="p-3 text-center text-sky-300 font-semibold">${avoid4thRate}%</td>
+          <td class="p-3 text-center text-emerald-400 font-bold">${winRate}% <span class="text-[10px] text-slate-400">(${pStat.wins})</span></td>
+          <td class="p-3 text-center text-pink-400 font-bold">${riichiRate}% <span class="text-[10px] text-slate-400">(${pStat.riichiCount})</span></td>
+          <td class="p-3 text-center text-rose-400 font-bold">${dealInRate}% <span class="text-[10px] text-slate-400">(${pStat.dealIns})</span></td>
+          <td class="p-3 text-right text-amber-400 font-semibold">${avgWinScore > 0 ? avgWinScore.toLocaleString() + '점' : '-'}</td>
+          <td class="p-3 text-right text-rose-300 font-semibold">${avgDealInScore > 0 ? avgDealInScore.toLocaleString() + '점' : '-'}</td>
+          <td class="p-3 text-right font-black ${pStat.totalPt >= 0 ? 'text-emerald-400' : 'text-rose-400'}">
+            ${pStat.totalPt >= 0 ? '+' : ''}${pStat.totalPt} pt
+          </td>
+        `;
+        leaderboardBody.appendChild(tr);
+      });
+
+      let totalHandsAll = state.history.length;
+      (state.archives || []).forEach(a => { totalHandsAll += (a.history ? a.history.length : 0); });
+
+      let maxGainVal = 0;
+      let maxGainInfo = '기록 없음';
+      let allYakuCounts = {};
+      let totalWinsCount = 0;
+      let totalGainSum = 0;
+
+      playerList.forEach(p => {
+        totalWinsCount += p.wins;
+        totalGainSum += p.winScoreSum;
+        if (p.bestHand && p.bestHand.totalGain > maxGainVal) {
+          maxGainVal = p.bestHand.totalGain;
+          maxGainInfo = `${p.name} (${p.bestHand.tierName}, +${p.bestHand.totalGain.toLocaleString()}점)`;
+        }
+        Object.entries(p.yakuMap).forEach(([yn, cnt]) => {
+          allYakuCounts[yn] = (allYakuCounts[yn] || 0) + cnt;
+        });
+      });
+
+      document.getElementById('stat-all-hands').textContent = `${totalHandsAll}국`;
+      document.getElementById('stat-all-matches-sub').textContent = `아카이브 ${(state.archives || []).length}대국 + 현재 대국 합산`;
+      document.getElementById('stat-max-gain').textContent = `${maxGainVal.toLocaleString()}점`;
+      document.getElementById('stat-max-gain-desc').textContent = maxGainInfo;
+
+      const topYakuEntry = Object.entries(allYakuCounts).sort((a, b) => b[1] - a[1])[0];
+      if (topYakuEntry) {
+        document.getElementById('stat-top-yaku').textContent = topYakuEntry[0];
+        document.getElementById('stat-top-yaku-count').textContent = `총 ${topYakuEntry[1]}회 출현`;
+      } else {
+        document.getElementById('stat-top-yaku').textContent = '-';
+        document.getElementById('stat-top-yaku-count').textContent = '총 0회 출현';
+      }
+
+      const avgGainVal = totalWinsCount > 0 ? Math.round(totalGainSum / totalWinsCount) : 0;
+      document.getElementById('stat-avg-gain').textContent = `${avgGainVal.toLocaleString()}점`;
+    }
+
+    function renderStatsAndCharts() {
+      const pCount = getPlayerCount();
+      const activePlayers = state.players.slice(0, pCount);
+      const totalHandsDenom = state.history.length || 1;
+
+      const majsoulStandings = calculateMajsoulStandings();
+      const rankingGrid = document.getElementById('majsoul-final-ranking-grid');
+      rankingGrid.innerHTML = '';
+
+      majsoulStandings.forEach((st) => {
+        const rankColor = st.rank === 1 ? 'text-amber-400 border-amber-500/50 bg-amber-500/10' : st.rank === 2 ? 'text-slate-200 border-slate-700 bg-slate-950/80' : st.rank === 3 ? 'text-amber-600 border-amber-800/40 bg-slate-950/80' : 'text-rose-400 border-rose-900/40 bg-slate-950/80';
+        const box = document.createElement('div');
+        box.className = `rounded-xl p-3.5 border ${rankColor} space-y-2 flex flex-col justify-between`;
+        box.innerHTML = `
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-extrabold px-2 py-0.5 rounded bg-slate-900 text-white">${st.rank}위</span>
+            <span class="font-bold text-sm text-white truncate">${st.name}</span>
+          </div>
+          <div class="space-y-0.5 text-xs">
+            <div class="flex justify-between text-slate-300">
+              <span>최종 점수:</span>
+              <strong class="text-white">${st.score.toLocaleString()}점</strong>
+            </div>
+            <div class="flex justify-between text-slate-300">
+              <span>반환점 환산(오카):</span>
+              <span class="${st.rawPt >= 0 ? 'text-emerald-400' : 'text-rose-400'} font-semibold">${st.rawPt >= 0 ? '+' : ''}${st.rawPt}</span>
+            </div>
+            <div class="flex justify-between text-slate-300">
+              <span>우마(Uma):</span>
+              <span class="${st.uma >= 0 ? 'text-emerald-400' : 'text-rose-400'} font-semibold">${st.uma >= 0 ? '+' : ''}${st.uma}</span>
+            </div>
+          </div>
+          <div class="pt-2 border-t border-slate-800 flex items-baseline justify-between">
+            <span class="text-[11px] text-slate-400">최종 Pt:</span>
+            <span class="text-base font-black ${st.finalPt >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${st.finalPt >= 0 ? '+' : ''}${st.finalPt} pt</span>
+          </div>
+        `;
+        rankingGrid.appendChild(box);
+      });
+
+      const statsContainer = document.getElementById('stats-player-cards');
+      statsContainer.innerHTML = '';
+
+      activePlayers.forEach((p, idx) => {
+        const playerWins = [];
+        let riichiCount = 0;
+        state.history.forEach(h => {
+          const rSet = new Set(h.riichiPlayerIds || []);
+          (h.winnerHands || []).forEach(wh => {
+            if ((wh.yakuNames || []).some(yn => yn.includes('리치'))) rSet.add(wh.winnerId);
+          });
+          if (rSet.has(p.id)) riichiCount += 1;
+
+          if (h.outcome !== 'draw' && h.winnerHands) {
+            h.winnerHands.forEach(wh => {
+              if (wh.winnerId === p.id) {
+                playerWins.push({ ...wh, roundLabel: h.roundLabel, outcome: h.outcome });
+              }
+            });
+          }
+        });
+
+        const rons = playerWins.filter(w => w.outcome === 'ron').length;
+        const tsumos = playerWins.filter(w => w.outcome === 'tsumo').length;
+        const dealIns = state.history.filter(h => h.outcome === 'ron' && h.loserId === p.id).length;
+        const avgWinScore = playerWins.length > 0
+          ? Math.round(playerWins.reduce((s, w) => s + w.totalGain, 0) / playerWins.length)
+          : 0;
+        const bestHand = playerWins.length > 0
+          ? playerWins.reduce((best, w) => w.totalGain > best.totalGain ? w : best, playerWins[0])
+          : null;
+
+        const winRatePct = state.history.length > 0 ? ((playerWins.length / totalHandsDenom) * 100).toFixed(1) : '0.0';
+        const riichiRatePct = state.history.length > 0 ? ((riichiCount / totalHandsDenom) * 100).toFixed(1) : '0.0';
+
+        const yakuCounts = {};
+        playerWins.forEach(w => {
+          (w.yakuNames || []).forEach(yn => {
+            if (!yn.includes('역 미기재')) {
+              yakuCounts[yn] = (yakuCounts[yn] || 0) + 1;
+            }
+          });
+        });
+        const topYakuList = Object.entries(yakuCounts)
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 5);
+
+        const card = document.createElement('div');
+        card.className = 'bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3';
+        card.innerHTML = `
+          <div class="flex items-center justify-between border-b border-slate-800 pb-2.5">
+            <div class="flex items-center gap-2">
+              <span class="w-3 h-3 rounded-full" style="background:${PLAYER_COLORS[idx]}"></span>
+              <h4 class="font-bold text-base text-white">${p.name}</h4>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-sm font-black text-emerald-400">${p.score.toLocaleString()}점</span>
+              <button type="button" data-goto-profile="${p.name}" class="goto-profile-btn text-[11px] px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-sky-300 border border-slate-700">상세 기록실 →</button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-5 gap-2 text-center">
+            <div class="bg-slate-950 p-2 rounded-lg border border-slate-800/80">
+              <div class="text-[11px] text-slate-400">화료율</div>
+              <div class="text-xs sm:text-sm font-bold text-emerald-400">${winRatePct}% (${playerWins.length}회)</div>
+            </div>
+            <div class="bg-slate-950 p-2 rounded-lg border border-slate-800/80">
+              <div class="text-[11px] text-slate-400">리치율</div>
+              <div class="text-xs sm:text-sm font-bold text-pink-400">${riichiRatePct}% (${riichiCount}회)</div>
+            </div>
+            <div class="bg-slate-950 p-2 rounded-lg border border-slate-800/80">
+              <div class="text-[11px] text-slate-400">론 / 쯔모</div>
+              <div class="text-xs sm:text-sm font-bold text-sky-300">${rons} / ${tsumos}</div>
+            </div>
+            <div class="bg-slate-950 p-2 rounded-lg border border-slate-800/80">
+              <div class="text-[11px] text-slate-400">방총 횟수</div>
+              <div class="text-xs sm:text-sm font-bold text-rose-400">${dealIns}회</div>
+            </div>
+            <div class="bg-slate-950 p-2 rounded-lg border border-slate-800/80">
+              <div class="text-[11px] text-slate-400">평균 타점</div>
+              <div class="text-xs sm:text-sm font-bold text-amber-300">${avgWinScore.toLocaleString()}</div>
+            </div>
+          </div>
+
+          <div>
+            <div class="text-xs font-semibold text-slate-400 mb-1.5">주력 화료 역</div>
+            <div class="flex flex-wrap gap-1.5">
+              ${topYakuList.length > 0
+                ? topYakuList.map(([yn, cnt]) => `<span class="text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-semibold">${yn} (${cnt}회)</span>`).join('')
+                : '<span class="text-xs text-slate-500">아직 화료 역 기록 없음</span>'
+              }
+            </div>
+          </div>
+
+          ${bestHand ? `
+            <div class="text-xs bg-slate-950/90 p-2.5 rounded-lg border border-slate-800 text-slate-300">
+              🏅 <strong>최고 득점 화료:</strong> ${bestHand.roundLabel} ${bestHand.tierName} (+${bestHand.totalGain.toLocaleString()}점) — ${(bestHand.yakuNames || []).join(' · ')}
+            </div>
+          ` : ''}
+        `;
+        statsContainer.appendChild(card);
+      });
+
+      document.querySelectorAll('.goto-profile-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          state.selectedProfileName = btn.getAttribute('data-goto-profile');
+          switchTab('player');
+        });
+      });
+
+      renderCharts();
+    }
+
+    function renderAll() {
+      renderTopBoard();
+      renderRecorderForm();
+      renderFeedsAndHistory();
+      renderCharts();
+      if (state.activeTab === 'stats') {
+        renderStatsAndCharts();
+      } else if (state.activeTab === 'player') {
+        renderPlayerProfileTab();
+      } else if (state.activeTab === 'monthly') {
+        renderMonthlyStatsAndChart();
+      } else if (state.activeTab === 'archive') {
+        renderArchiveList();
+      }
+    }
+
+    function saveSnapshot() {
+      state.snapshots.push(JSON.parse(JSON.stringify({
+        players: state.players,
+        roundWind: state.roundWind,
+        roundNum: state.roundNum,
+        honba: state.honba,
+        riichiPot: state.riichiPot,
+        isGameOver: state.isGameOver,
+        history: state.history
+      })));
+    }
+
+    function handleWinSubmit() {
+      if (state.isGameOver) return;
+      const pCount = getPlayerCount();
+      const errEl = document.getElementById('win-validation-msg');
+
+      for (let wid of state.winnerIds) {
+        ensureWinnerConfig(wid);
+        const cfg = state.winnerHandConfigs[wid];
+        const testCalc = calculateSingleHandScore(wid, cfg);
+        if (!testCalc.valid) {
+          state.activeConfigWinnerId = wid;
+          renderRecorderForm();
+          errEl.textContent = `⚠️ [${state.players.find(p => p.id === wid)?.name}]의 성립 역을 선택하거나 [⚡ 역 생략(점수만)] 모드를 켜주세요.`;
+          errEl.classList.remove('hidden');
+          return;
+        }
+      }
+      errEl.classList.add('hidden');
+
+      saveSnapshot();
+
+      const dealerIdx = state.roundNum % pCount;
+      const roundLabel = getRoundLabel(state.roundWind, dealerIdx);
+
+      const riichiPlayerIds = [];
+      state.riichiDeclared.slice(0, pCount).forEach((declared, idx) => {
+        if (declared) {
+          riichiPlayerIds.push(idx);
+          state.players[idx].score -= 1000;
+          state.riichiPot += 1;
+        }
+      });
+
+      const totalRiichiSticks = state.riichiPot;
+      const riichiBonus = totalRiichiSticks * 1000;
+      const honbaBonusTotal = state.honba * 300;
+
+      const winnerHandsRecord = [];
+
+      if (state.outcomeType === 'ron') {
+        const winners = [...state.winnerIds];
+        winners.sort((a, b) => {
+          const distA = (a - state.loserId + pCount) % pCount;
+          const distB = (b - state.loserId + pCount) % pCount;
+          return distA - distB;
+        });
+
+        let totalLoserPay = 0;
+        let grandTotalGain = 0;
+
+        winners.forEach((wid, idx) => {
+          const cfg = state.winnerHandConfigs[wid];
+          const singleCalc = calculateSingleHandScore(wid, cfg);
+          const baseScore = singleCalc.baseHandScore;
+          const extraBonus = (idx === 0) ? (honbaBonusTotal + riichiBonus) : 0;
+          const totalTake = baseScore + extraBonus;
+
+          totalLoserPay += baseScore;
+          grandTotalGain += totalTake;
+          state.players[wid].score += totalTake;
+
+          winnerHandsRecord.push({
+            winnerId: wid,
+            isFuro: cfg.isFuro,
+            isQuickScoreOnly: Boolean(cfg.isQuickScoreOnly),
+            yakuNames: singleCalc.evaluatedYakuNames,
+            yakuIds: singleCalc.validYaku.map(y => y.id),
+            totalHan: singleCalc.totalHan,
+            fu: singleCalc.fu,
+            tierName: singleCalc.tierName,
+            baseHandScore: baseScore,
+            totalGain: totalTake
+          });
+        });
+
+        totalLoserPay += honbaBonusTotal;
+        state.players[state.loserId].score -= totalLoserPay;
+        state.riichiPot = 0;
+
+        const memo = document.getElementById('input-hand-memo').value.trim();
+
+        state.history.push({
+          id: 'h_' + Date.now(),
+          timestamp: Date.now(),
+          roundLabel,
+          honba: state.honba,
+          outcome: 'ron',
+          riichiPlayerIds,
+          winnerHands: winnerHandsRecord,
+          loserId: state.loserId,
+          baseHandScore: totalLoserPay,
+          memo,
+          totalGain: grandTotalGain,
+          scoresAfter: state.players.slice(0, pCount).map(p => p.score)
+        });
+
+        if (winners.includes(dealerIdx)) {
+          state.honba += 1;
+        } else {
+          state.honba = 0;
+          checkGameProgression(pCount, dealerIdx);
+        }
+
+      } else {
+        const winnerId = state.winnerIds[0];
+        const cfg = state.winnerHandConfigs[winnerId];
+        const singleCalc = calculateSingleHandScore(winnerId, cfg);
+        const eachHonba = 100 * state.honba;
+        let totalCollected = 0;
+
+        for (let i = 0; i < pCount; i++) {
+          if (i === winnerId) continue;
+          let share = 0;
+          if (cfg.manualScoreEnabled || cfg.isQuickScoreOnly) {
+            share = Math.ceil((singleCalc.baseHandScore / (pCount - 1)) / 100) * 100;
+          } else {
+            share = (i === dealerIdx) ? singleCalc.oyaPay : singleCalc.koPay;
+          }
+          const pay = share + eachHonba;
+          state.players[i].score -= pay;
+          totalCollected += pay;
+        }
+        const totalTake = totalCollected + riichiBonus;
+        state.players[winnerId].score += totalTake;
+        state.riichiPot = 0;
+
+        const memo = document.getElementById('input-hand-memo').value.trim();
+
+        winnerHandsRecord.push({
+          winnerId,
+          isFuro: cfg.isFuro,
+          isQuickScoreOnly: Boolean(cfg.isQuickScoreOnly),
+          yakuNames: singleCalc.evaluatedYakuNames,
+          yakuIds: singleCalc.validYaku.map(y => y.id),
+          totalHan: singleCalc.totalHan,
+          fu: singleCalc.fu,
+          tierName: singleCalc.tierName,
+          baseHandScore: singleCalc.baseHandScore,
+          totalGain: totalTake
+        });
+
+        state.history.push({
+          id: 'h_' + Date.now(),
+          timestamp: Date.now(),
+          roundLabel,
+          honba: state.honba,
+          outcome: 'tsumo',
+          riichiPlayerIds,
+          winnerHands: winnerHandsRecord,
+          loserId: null,
+          memo,
+          totalGain: totalTake,
+          scoresAfter: state.players.slice(0, pCount).map(p => p.score)
+        });
+
+        if (winnerId === dealerIdx) {
+          state.honba += 1;
+        } else {
+          state.honba = 0;
+          checkGameProgression(pCount, dealerIdx);
+        }
+      }
+
+      state.riichiDeclared = [false, false, false, false];
+      document.getElementById('input-hand-memo').value = '';
+      saveToStorage();
+      renderAll();
+      showToast(state.isGameOver ? '🏆 토비 또는 조건 달성으로 대국이 종료되었습니다!' : '🀄 화료 기록 저장 완료!');
+    }
+
+    function handleDrawSubmit() {
+      if (state.isGameOver) return;
+      saveSnapshot();
+      const pCount = getPlayerCount();
+      const dealerIdx = state.roundNum % pCount;
+      const roundLabel = getRoundLabel(state.roundWind, dealerIdx);
+
+      const riichiPlayerIds = [];
+      state.riichiDeclared.slice(0, pCount).forEach((declared, idx) => {
+        if (declared) {
+          riichiPlayerIds.push(idx);
+          state.players[idx].score -= 1000;
+          state.riichiPot += 1;
+        }
+      });
+
+      const tenpaiIds = [];
+      const notenIds = [];
+      for (let i = 0; i < pCount; i++) {
+        if (state.tenpaiDeclared[i]) tenpaiIds.push(i);
+        else notenIds.push(i);
+      }
+
+      let gainPerTenpai = 0;
+      if (tenpaiIds.length > 0 && notenIds.length > 0) {
+        const pool = pCount === 4 ? 3000 : 2000;
+        gainPerTenpai = Math.floor(pool / tenpaiIds.length);
+        const lossPerNoten = Math.floor(pool / notenIds.length);
+        tenpaiIds.forEach(id => { state.players[id].score += gainPerTenpai; });
+        notenIds.forEach(id => { state.players[id].score -= lossPerNoten; });
+      }
+
+      const memo = document.getElementById('input-draw-memo').value.trim();
+
+      state.history.push({
+        id: 'h_' + Date.now(),
+        timestamp: Date.now(),
+        roundLabel,
+        honba: state.honba,
+        outcome: 'draw',
+        riichiPlayerIds,
+        winnerHands: [],
+        loserId: null,
+        tenpaiIds,
+        memo,
+        totalGain: gainPerTenpai,
+        scoresAfter: state.players.slice(0, pCount).map(p => p.score)
+      });
+
+      state.honba += 1;
+      if (!tenpaiIds.includes(dealerIdx)) {
+        checkGameProgression(pCount, dealerIdx);
+      }
+
+      state.riichiDeclared = [false, false, false, false];
+      state.tenpaiDeclared = [false, false, false, false];
+      document.getElementById('input-draw-memo').value = '';
+      saveToStorage();
+      renderAll();
+      showToast(state.isGameOver ? '🏆 대국이 종료되었습니다!' : `📌 ${roundLabel} 유국 기록이 저장되었습니다.`);
+    }
+
+    function checkGameProgression(pCount, prevDealerIdx) {
+      const hasTobi = state.players.slice(0, pCount).some(p => p.score < 0);
+      if (hasTobi) {
+        state.isGameOver = true;
+        archiveCurrentMatch('자동 백업 (토비 종국)');
+        showToast('💥 토비 발생! 대국이 즉시 종료되고 아카이브에 백업되었습니다.');
+        return;
+      }
+
+      state.roundNum += 1;
+
+      const isLastRegularRound = (state.gameMode.includes('hanchan') && state.roundWind === 1 && state.roundNum >= pCount) ||
+                                 (state.gameMode.includes('tonpuu') && state.roundWind === 0 && state.roundNum >= pCount);
+
+      if (isLastRegularRound) {
+        const activePlayers = state.players.slice(0, pCount);
+        const topScore = Math.max(...activePlayers.map(p => p.score));
+        const returnScore = getReturnScore();
+
+        if (topScore >= returnScore) {
+          state.isGameOver = true;
+          archiveCurrentMatch('자동 백업 (정규 국 종료)');
+          showToast('🏆 1위가 3만 점을 넘겨 대국이 종료되고 아카이브에 백업되었습니다!');
+        } else {
+          state.roundWind = 2;
+          state.roundNum = 0;
+          showToast('🔄 1위가 3만 점 미만이므로 서입(서국 연장전)에 돌입합니다!');
+        }
+      } else if (state.roundWind >= 2) {
+        const activePlayers = state.players.slice(0, pCount);
+        const topScore = Math.max(...activePlayers.map(p => p.score));
+        const returnScore = getReturnScore();
+        if (topScore >= returnScore) {
+          state.isGameOver = true;
+          archiveCurrentMatch('자동 백업 (연장전 종료)');
+          showToast('🏆 연장전 중 1위가 3만 점을 달성하여 대국이 종료되고 아카이브에 백업되었습니다!');
+        } else if (state.roundNum >= pCount) {
+          state.roundWind += 1;
+          state.roundNum = 0;
+          showToast('🔄 연장전 지속 중!');
+        }
+      } else {
+        if (state.roundNum >= pCount) {
+          state.roundNum = 0;
+          state.roundWind += 1;
+        }
+      }
+      saveToSupabase();
+    }
+
+    function switchTab(tab) {
+      state.activeTab = tab;
+      const views = {
+        board: document.getElementById('view-board'),
+        history: document.getElementById('view-history'),
+        stats: document.getElementById('view-stats'),
+        player: document.getElementById('view-player'),
+        monthly: document.getElementById('view-monthly'),
+        archive: document.getElementById('view-archive')
+      };
+      const btns = {
+        board: document.getElementById('tab-btn-board'),
+        history: document.getElementById('tab-btn-history'),
+        stats: document.getElementById('tab-btn-stats'),
+        player: document.getElementById('tab-btn-player'),
+        monthly: document.getElementById('tab-btn-monthly'),
+        archive: document.getElementById('tab-btn-archive')
+      };
+
+      Object.keys(views).forEach(k => {
+        if (k === tab) {
+          views[k].classList.remove('hidden');
+          if (k === 'archive') {
+            btns[k].className = 'px-3 py-1.5 rounded-lg text-xs font-semibold transition bg-amber-600 text-slate-950 shadow font-bold';
+          } else if (k === 'player') {
+            btns[k].className = 'px-3 py-1.5 rounded-lg text-xs font-semibold transition bg-sky-500 text-slate-950 shadow font-bold';
+          } else {
+            btns[k].className = 'px-3 py-1.5 rounded-lg text-xs font-semibold transition bg-emerald-600 text-white shadow';
+          }
+        } else {
+          views[k].classList.add('hidden');
+          if (k === 'archive') {
+            btns[k].className = 'px-3 py-1.5 rounded-lg text-xs font-semibold transition text-amber-300 hover:text-amber-200';
+          } else if (k === 'player') {
+            btns[k].className = 'px-3 py-1.5 rounded-lg text-xs font-semibold transition text-sky-300 hover:text-sky-200';
+          } else {
+            btns[k].className = 'px-3 py-1.5 rounded-lg text-xs font-semibold transition text-slate-300 hover:text-white';
+          }
+        }
+      });
+
+      if (tab === 'stats') {
+        renderStatsAndCharts();
+      } else if (tab === 'player') {
+        renderPlayerProfileTab();
+      } else if (tab === 'monthly') {
+        renderMonthlyStatsAndChart();
+      } else if (tab === 'board') {
+        renderCharts();
+      } else if (tab === 'archive') {
+        renderArchiveList();
+      }
+    }
+
+    function downloadHtmlFile() {
+      saveToSupabase();
+      const fullHtml = document.documentElement.outerHTML;
+      const blob = new Blob([fullHtml], { type: 'text/html;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `janglog_match_${Date.now()}.html`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast('📥 현재 상태가 포함된 HTML 파일이 다운로드되었습니다!');
+    }
+
+    function openFinalScoreModal() {
+      const pCount = getPlayerCount();
+      const expectedSum = pCount * getStartingScore();
+      document.getElementById('final-expected-sum').textContent = expectedSum.toLocaleString();
+
+      const container = document.getElementById('final-score-inputs-container');
+      container.innerHTML = '';
+
+      state.players.slice(0, pCount).forEach((p, idx) => {
+        const row = document.createElement('div');
+        row.className = 'flex items-center justify-between gap-3 bg-slate-950 p-2.5 rounded-xl border border-slate-800';
+        row.innerHTML = `
+          <div class="flex items-center gap-2">
+            <span class="w-6 h-6 rounded-lg bg-slate-800 text-xs font-bold flex items-center justify-center text-slate-300">${WIND_NAMES[idx]}</span>
+            <input type="text" id="final-pname-${idx}" value="${p.name}" class="w-28 bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs font-bold text-white" />
+          </div>
+          <div class="flex items-center gap-1.5">
+            <input type="number" id="final-pscore-${idx}" step="100" value="${p.score}" class="final-score-input w-28 bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-sm font-black text-emerald-300 text-right" />
+            <span class="text-xs text-slate-400">점</span>
+          </div>
+        `;
+        container.appendChild(row);
+      });
+
+      document.querySelectorAll('.final-score-input').forEach(inp => {
+        inp.addEventListener('input', updateFinalScoreModalPreview);
+      });
+      updateFinalScoreModalPreview();
+      document.getElementById('modal-final-score').classList.remove('hidden');
+    }
+
+    function updateFinalScoreModalPreview() {
+      const pCount = getPlayerCount();
+      const expectedSum = pCount * getStartingScore();
+      const tempPlayers = [];
+      let sum = 0;
+
+      for (let i = 0; i < pCount; i++) {
+        const nameVal = document.getElementById(`final-pname-${i}`)?.value.trim() || state.players[i].name;
+        const scoreVal = Number(document.getElementById(`final-pscore-${i}`)?.value) || 0;
+        sum += scoreVal;
+        tempPlayers.push({ id: i, name: nameVal, score: scoreVal });
+      }
+
+      const diff = sum - expectedSum;
+      const sumBadge = document.getElementById('final-current-sum-badge');
+      if (diff === 0) {
+        sumBadge.textContent = `현재 합계: ${sum.toLocaleString()}점 (일치 ✓)`;
+        sumBadge.className = 'font-bold text-emerald-400';
+      } else {
+        sumBadge.textContent = `현재 합계: ${sum.toLocaleString()}점 (${diff > 0 ? '+' : ''}${diff.toLocaleString()}점 오차)`;
+        sumBadge.className = 'font-bold text-amber-400';
+      }
+
+      const standings = calculateMajsoulStandings(tempPlayers);
+      const previewEl = document.getElementById('final-score-preview-list');
+      previewEl.innerHTML = standings.map(st => `
+        <div class="bg-slate-900 p-2 rounded-lg border border-slate-800 flex items-center justify-between">
+          <span><strong>${st.rank}위</strong> ${st.name}</span>
+          <span class="font-bold ${st.finalPt >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${st.finalPt >= 0 ? '+' : ''}${st.finalPt} pt</span>
+        </div>
+      `).join('');
+    }
+
+    window.addEventListener('DOMContentLoaded', async () => {
+      let loaded = await loadFromSupabase();
+      if (!loaded) {
+        try {
+          const localRaw = localStorage.getItem('janglog_state_v2');
+          if (localRaw) {
+            state = Object.assign(state, JSON.parse(localRaw));
+            if (!state.security) state.security = { adminPwHash: null };
+            loaded = true;
+          }
+        } catch (e) {}
+      }
+      if (!loaded) {
+        loadSampleMatch();
+      } else {
+        renderAll();
+      }
+
+      if (supabaseClient) {
+        supabaseClient
+          .channel('public:match_sessions')
+          .on('postgres_changes', {
+            event: '*',
+            schema: 'public',
+            table: 'match_sessions',
+            filter: `room_code=eq.${ROOM_ID}`
+          }, payload => {
+            if (payload.new && payload.new.state_data) {
+              state = Object.assign(state, payload.new.state_data);
+              if (!Array.isArray(state.archives)) state.archives = [];
+              if (!state.security) state.security = { adminPwHash: null };
+              renderAll();
+              showToast('🔄 다른 기기의 변경사항이 실시간 동기화되었습니다!');
+            }
+          })
+          .subscribe();
+      }
+
+      // --- PASSWORD MODAL LISTENERS (DUAL RECORD PW & DELETE PW) ---
+      const authModal = document.getElementById('modal-auth-pw');
+      document.getElementById('btn-auth-lock').addEventListener('click', () => {
+        if (hasPasswordsConfigured() && isRecordAuthorizedSession) {
+          isRecordAuthorizedSession = false;
+          updateLockUI();
+          showToast('🔒 기록 권한이 다시 잠겼습니다.');
+        } else {
+          openAuthModal(null, 'record');
+        }
+      });
+      document.getElementById('btn-close-auth-modal').addEventListener('click', () => authModal.classList.add('hidden'));
+      document.getElementById('btn-cancel-setup-pw').addEventListener('click', () => authModal.classList.add('hidden'));
+      document.getElementById('btn-cancel-verify-pw').addEventListener('click', () => authModal.classList.add('hidden'));
+
+      document.getElementById('btn-save-setup-pw').addEventListener('click', async () => {
+        const recPw = document.getElementById('input-setup-record-pw').value;
+        const delPw = document.getElementById('input-setup-delete-pw').value;
+        const errEl = document.getElementById('auth-setup-error');
+
+        if (!recPw || recPw.length < 2) {
+          errEl.textContent = '⚠️ 기록용 비밀번호를 2자 이상 입력해 주세요.';
+          errEl.classList.remove('hidden');
+          return;
+        }
+        if (!delPw || delPw.length < 2) {
+          errEl.textContent = '⚠️ 삭제용 비밀번호를 2자 이상 입력해 주세요.';
+          errEl.classList.remove('hidden');
+          return;
+        }
+
+        normalizeSecurityState();
+        state.security.recordPwHash = await hashPassword(recPw);
+        state.security.deletePwHash = await hashPassword(delPw);
+        state.security.adminPwHash = state.security.recordPwHash;
+        isRecordAuthorizedSession = true;
+        authModal.classList.add('hidden');
+        saveToStorage();
+        updateLockUI();
+        showToast('👑 기록용 PW와 삭제용 PW가 각각 설정되었습니다!');
+        if (typeof pendingProtectedAction === 'function') {
+          const fn = pendingProtectedAction;
+          pendingProtectedAction = null;
+          fn();
+        }
+      });
+
+      const handleVerifySubmit = async () => {
+        normalizeSecurityState();
+        const inputVal = document.getElementById('input-verify-pw').value;
+        const errEl = document.getElementById('auth-verify-error');
+        const hashedInput = await hashPassword(inputVal);
+
+        if (currentAuthMode === 'delete') {
+          if (hashedInput !== state.security.deletePwHash) {
+            errEl.textContent = '❌ 삭제용 비밀번호(삭제 PW)가 일치하지 않습니다.';
+            errEl.classList.remove('hidden');
+            return;
+          }
+          authModal.classList.add('hidden');
+          showToast('🔓 삭제용 비밀번호 확인 완료!');
+        } else {
+          if (hashedInput !== state.security.recordPwHash && hashedInput !== state.security.deletePwHash) {
+            errEl.textContent = '❌ 기록용 비밀번호(기록 PW)가 일치하지 않습니다.';
+            errEl.classList.remove('hidden');
+            return;
+          }
+          const keepUnlocked = document.getElementById('chk-keep-unlocked').checked;
+          isRecordAuthorizedSession = keepUnlocked;
+          authModal.classList.add('hidden');
+          updateLockUI();
+          showToast('🔓 기록 권한 비밀번호 확인 완료!');
+        }
+
+        if (typeof pendingProtectedAction === 'function') {
+          const fn = pendingProtectedAction;
+          pendingProtectedAction = null;
+          fn();
+        }
+      };
+
+      document.getElementById('btn-confirm-verify-pw').addEventListener('click', handleVerifySubmit);
+      document.getElementById('input-verify-pw').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          handleVerifySubmit();
+        }
+      });
+
+      document.getElementById('btn-toggle-change-pw-view').addEventListener('click', () => {
+        document.getElementById('auth-change-panel').classList.toggle('hidden');
+        document.getElementById('input-current-pw').value = '';
+        document.getElementById('input-change-record-pw').value = '';
+        document.getElementById('input-change-delete-pw').value = '';
+      });
+      document.getElementById('btn-cancel-change-pw').addEventListener('click', () => {
+        document.getElementById('auth-change-panel').classList.add('hidden');
+      });
+      document.getElementById('btn-save-change-pw').addEventListener('click', async () => {
+        normalizeSecurityState();
+        const curPw = document.getElementById('input-current-pw').value;
+        const newRecPw = document.getElementById('input-change-record-pw').value;
+        const newDelPw = document.getElementById('input-change-delete-pw').value;
+        const errEl = document.getElementById('auth-change-error');
+
+        const curHashed = await hashPassword(curPw);
+        if (curHashed !== state.security.recordPwHash && curHashed !== state.security.deletePwHash) {
+          errEl.textContent = '❌ 현재 비밀번호(기록 PW 또는 삭제 PW)가 일치하지 않아 변경할 수 없습니다.';
+          errEl.classList.remove('hidden');
+          return;
+        }
+        if (!newRecPw && !newDelPw) {
+          errEl.textContent = '⚠️ 변경할 새 기록용 PW 또는 새 삭제용 PW를 입력해 주세요.';
+          errEl.classList.remove('hidden');
+          return;
+        }
+        if (newRecPw && newRecPw.length < 2) {
+          errEl.textContent = '⚠️ 새 기록용 비밀번호를 2자 이상 입력해 주세요.';
+          errEl.classList.remove('hidden');
+          return;
+        }
+        if (newDelPw && newDelPw.length < 2) {
+          errEl.textContent = '⚠️ 새 삭제용 비밀번호를 2자 이상 입력해 주세요.';
+          errEl.classList.remove('hidden');
+          return;
+        }
+
+        if (newRecPw) {
+          state.security.recordPwHash = await hashPassword(newRecPw);
+          state.security.adminPwHash = state.security.recordPwHash;
+        }
+        if (newDelPw) {
+          state.security.deletePwHash = await hashPassword(newDelPw);
+        }
+        isRecordAuthorizedSession = true;
+        authModal.classList.add('hidden');
+        saveToStorage();
+        updateLockUI();
+        showToast('🔑 비밀번호가 성공적으로 변경되었습니다!');
+      });
+
+      // Navigation tabs
+      document.getElementById('tab-btn-board').addEventListener('click', () => switchTab('board'));
+      document.getElementById('tab-btn-history').addEventListener('click', () => switchTab('history'));
+      document.getElementById('tab-btn-stats').addEventListener('click', () => switchTab('stats'));
+      document.getElementById('tab-btn-player').addEventListener('click', () => switchTab('player'));
+      document.getElementById('tab-btn-monthly').addEventListener('click', () => switchTab('monthly'));
+      document.getElementById('tab-btn-archive').addEventListener('click', () => switchTab('archive'));
+
+      document.getElementById('select-player-scope').addEventListener('change', renderPlayerProfileTab);
+
+      document.getElementById('btn-banner-view-stats').addEventListener('click', () => switchTab('stats'));
+      document.getElementById('btn-banner-new-match').addEventListener('click', () => requireDeleteAuth(resetNewMatch));
+
+      document.getElementById('btn-download-html').addEventListener('click', downloadHtmlFile);
+
+      const archiveSaveModal = document.getElementById('modal-archive-save');
+      document.getElementById('btn-archive-current').addEventListener('click', () => {
+        requireAdminAuth(() => {
+          document.getElementById('input-archive-save-memo').value = `대국 세션 (${new Date().toLocaleDateString()})`;
+          archiveSaveModal.classList.remove('hidden');
+        });
+      });
+      document.getElementById('btn-close-archive-save').addEventListener('click', () => archiveSaveModal.classList.add('hidden'));
+      document.getElementById('btn-cancel-archive-save').addEventListener('click', () => archiveSaveModal.classList.add('hidden'));
+      document.getElementById('btn-confirm-archive-save').addEventListener('click', () => {
+        const val = document.getElementById('input-archive-save-memo').value.trim() || '대국 아카이브';
+        archiveSaveModal.classList.add('hidden');
+        archiveCurrentMatch(val);
+      });
+
+      document.getElementById('btn-clear-archive').addEventListener('click', () => {
+        requireDeleteAuth(() => {
+          state.archives = [];
+          saveToStorage();
+          renderAll();
+          showToast('🗑️ 모든 아카이브가 비워졌습니다.');
+        });
+      });
+
+      const archiveModal = document.getElementById('modal-archive-detail');
+      document.getElementById('btn-close-archive-modal').addEventListener('click', () => archiveModal.classList.add('hidden'));
+      document.getElementById('btn-close-archive-detail').addEventListener('click', () => archiveModal.classList.add('hidden'));
+
+      document.getElementById('btn-restore-archive-to-board').addEventListener('click', () => {
+        requireAdminAuth(() => {
+          const arch = state.archives.find(a => a.id === state.viewingArchiveId);
+          if (!arch) return;
+          saveSnapshot();
+          state.players = JSON.parse(JSON.stringify(arch.players || state.players));
+          state.history = JSON.parse(JSON.stringify(arch.history || []));
+          state.gameMode = arch.gameMode || state.gameMode;
+          state.umaProfile = arch.umaProfile || state.umaProfile;
+          state.isGameOver = false;
+          archiveModal.classList.add('hidden');
+          saveToStorage();
+          renderAll();
+          switchTab('board');
+          showToast('🔄 선택한 아카이브 대국이 현재 보드로 복원되었습니다!');
+        });
+      });
+
+      const finalScoreModal = document.getElementById('modal-final-score');
+      document.getElementById('btn-open-final-score-modal').addEventListener('click', () => requireAdminAuth(openFinalScoreModal));
+      document.getElementById('btn-archive-quick-score').addEventListener('click', () => requireAdminAuth(openFinalScoreModal));
+      document.getElementById('btn-close-final-score-modal').addEventListener('click', () => finalScoreModal.classList.add('hidden'));
+      document.getElementById('btn-cancel-final-score').addEventListener('click', () => finalScoreModal.classList.add('hidden'));
+
+      document.getElementById('btn-auto-fill-4th').addEventListener('click', () => {
+        const pCount = getPlayerCount();
+        const expectedSum = pCount * getStartingScore();
+        let sumOthers = 0;
+        for (let i = 0; i < pCount - 1; i++) {
+          sumOthers += Number(document.getElementById(`final-pscore-${i}`)?.value) || 0;
+        }
+        const lastInput = document.getElementById(`final-pscore-${pCount - 1}`);
+        if (lastInput) {
+          lastInput.value = expectedSum - sumOthers;
+          updateFinalScoreModalPreview();
+        }
+      });
+
+      document.getElementById('btn-save-final-to-archive-only').addEventListener('click', () => {
+        const pCount = getPlayerCount();
+        const customPlayers = [];
+        for (let i = 0; i < pCount; i++) {
+          const nameVal = document.getElementById(`final-pname-${i}`)?.value.trim() || state.players[i].name;
+          const scoreVal = Number(document.getElementById(`final-pscore-${i}`)?.value) || 0;
+          customPlayers.push({ id: i, name: nameVal, score: scoreVal });
+        }
+        const memoVal = document.getElementById('input-final-score-memo').value.trim() || `최종 점수 직입력 대국 (${new Date().toLocaleDateString()})`;
+        const standings = calculateMajsoulStandings(customPlayers);
+        if (!Array.isArray(state.archives)) state.archives = [];
+        state.archives.unshift({
+          id: 'arch_' + Date.now(),
+          dateStr: new Date().toLocaleString(),
+          memo: memoVal,
+          recordType: 'score_only',
+          gameMode: state.gameMode,
+          umaProfile: state.umaProfile,
+          standings,
+          history: [],
+          players: customPlayers
+        });
+        finalScoreModal.classList.add('hidden');
+        saveToStorage();
+        renderAll();
+        showToast('📁 최종 점수 대국이 아카이브와 플레이어 전적에 등록되었습니다!');
+      });
+
+      document.getElementById('btn-apply-final-and-finish').addEventListener('click', () => {
+        saveSnapshot();
+        const pCount = getPlayerCount();
+        for (let i = 0; i < pCount; i++) {
+          const nameVal = document.getElementById(`final-pname-${i}`)?.value.trim();
+          const scoreVal = Number(document.getElementById(`final-pscore-${i}`)?.value) || 0;
+          if (nameVal) state.players[i].name = nameVal;
+          state.players[i].score = scoreVal;
+        }
+        const memoVal = document.getElementById('input-final-score-memo').value.trim() || `최종 점수 마감 대국 (${new Date().toLocaleDateString()})`;
+        state.isGameOver = true;
+        archiveCurrentMatch(memoVal, state.history.length === 0 ? 'score_only' : 'detailed');
+        finalScoreModal.classList.add('hidden');
+        saveToStorage();
+        renderAll();
+        switchTab('stats');
+      });
+
+      const syncBoardModal = document.getElementById('modal-sync-board');
+      document.getElementById('btn-open-sync-board-modal').addEventListener('click', () => {
+        requireAdminAuth(() => {
+          const pCount = getPlayerCount();
+          document.getElementById('sync-round-wind').value = String(state.roundWind);
+          document.getElementById('sync-round-num').value = String(state.roundNum % pCount);
+          document.getElementById('sync-honba').value = state.honba;
+          document.getElementById('sync-riichi-pot').value = state.riichiPot;
+
+          const box = document.getElementById('sync-players-score-inputs');
+          box.innerHTML = state.players.slice(0, pCount).map((p, idx) => `
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-xs font-bold text-slate-300">${p.name}</span>
+              <input type="number" id="sync-pscore-${idx}" step="100" value="${p.score}" class="w-32 bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs font-bold text-white text-right" />
+            </div>
+          `).join('');
+          syncBoardModal.classList.remove('hidden');
+        });
+      });
+      document.getElementById('btn-close-sync-board').addEventListener('click', () => syncBoardModal.classList.add('hidden'));
+      document.getElementById('btn-cancel-sync-board').addEventListener('click', () => syncBoardModal.classList.add('hidden'));
+      document.getElementById('btn-save-sync-board').addEventListener('click', () => {
+        saveSnapshot();
+        const pCount = getPlayerCount();
+        state.roundWind = Number(document.getElementById('sync-round-wind').value) || 0;
+        state.roundNum = Number(document.getElementById('sync-round-num').value) || 0;
+        state.honba = Math.max(0, Number(document.getElementById('sync-honba').value) || 0);
+        state.riichiPot = Math.max(0, Number(document.getElementById('sync-riichi-pot').value) || 0);
+        for (let i = 0; i < pCount; i++) {
+          state.players[i].score = Number(document.getElementById(`sync-pscore-${i}`)?.value) || 0;
+        }
+        syncBoardModal.classList.add('hidden');
+        saveToStorage();
+        renderAll();
+        showToast('🔧 현재 국 및 보유 점수가 보정되었습니다.');
+      });
+
+      document.querySelectorAll('.qscore-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const activeWid = state.activeConfigWinnerId ?? state.winnerIds[0];
+          ensureWinnerConfig(activeWid);
+          const cfg = state.winnerHandConfigs[activeWid];
+          cfg.isQuickScoreOnly = true;
+          cfg.quickScoreValue = Number(btn.getAttribute('data-qscore')) || 8000;
+          cfg.quickTierLabel = btn.getAttribute('data-qtier') || '점수 빠른 기록';
+          document.getElementById('input-quick-custom-score').value = cfg.quickScoreValue;
+          renderRecorderForm();
+        });
+      });
+      document.getElementById('input-quick-custom-score').addEventListener('input', (e) => {
+        const activeWid = state.activeConfigWinnerId ?? state.winnerIds[0];
+        ensureWinnerConfig(activeWid);
+        const cfg = state.winnerHandConfigs[activeWid];
+        cfg.quickScoreValue = Number(e.target.value) || 1000;
+        cfg.quickTierLabel = `점수 직접 기록 (${cfg.quickScoreValue.toLocaleString()}점)`;
+        renderRecorderForm();
+      });
+
+      const searchInputEl = document.getElementById('input-yaku-search');
+      if (searchInputEl) {
+        searchInputEl.value = state.yakuSearchQuery || '';
+        searchInputEl.addEventListener('input', (e) => {
+          state.yakuSearchQuery = e.target.value;
+          renderRecorderForm();
+        });
+        searchInputEl.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            const q = searchInputEl.value.trim().toLowerCase();
+            const activeWid = state.activeConfigWinnerId ?? state.winnerIds[0];
+            ensureWinnerConfig(activeWid);
+            const activeConfig = state.winnerHandConfigs[activeWid];
+
+            if (q.includes('동') || q.includes('남') || q.includes('서') || q.includes('북')) {
+              ['yakuhai_jikaze', 'yakuhai_bakaze'].forEach(id => {
+                if (!activeConfig.selectedYaku.includes(id)) {
+                  activeConfig.selectedYaku.push(id);
+                }
+              });
+              showToast('자풍패 및 장풍패(연풍패)가 동시에 선택되었습니다!');
+              state.yakuSearchQuery = '';
+              searchInputEl.value = '';
+              renderRecorderForm();
+            } else {
+              const filtered = YAKU_LIST.filter(y => {
+                if (activeConfig.isFuro && y.isMenzenOnly) return false;
+                const nameMatch = y.name.toLowerCase().includes(q);
+                const kwMatch = y.keywords && y.keywords.some(kw => kw.toLowerCase().includes(q));
+                return nameMatch || kwMatch;
+              });
+              if (filtered.length > 0) {
+                const targetId = filtered[0].id;
+                if (!activeConfig.selectedYaku.includes(targetId)) {
+                  activeConfig.selectedYaku.push(targetId);
+                  showToast(filtered[0].name + ' 역이 선택되었습니다.');
+                }
+                state.yakuSearchQuery = '';
+                searchInputEl.value = '';
+                renderRecorderForm();
+              }
+            }
+          }
+        });
+      }
+
+      document.querySelectorAll('.outcome-type-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          state.outcomeType = btn.getAttribute('data-outcome');
+          if (state.outcomeType === 'tsumo') {
+            state.winnerIds = [state.winnerIds[0] ?? 0];
+            state.activeConfigWinnerId = state.winnerIds[0];
+            ensureWinnerConfig(state.activeConfigWinnerId);
+            if (!state.winnerHandConfigs[state.activeConfigWinnerId].selectedYaku.includes('tsumo')) {
+              state.winnerHandConfigs[state.activeConfigWinnerId].selectedYaku.push('tsumo');
+            }
+          } else if (state.outcomeType === 'ron') {
+            const wid = state.activeConfigWinnerId ?? state.winnerIds[0];
+            ensureWinnerConfig(wid);
+            state.winnerHandConfigs[wid].selectedYaku = state.winnerHandConfigs[wid].selectedYaku.filter(id => id !== 'tsumo');
+          }
+          renderRecorderForm();
+        });
+      });
+
+      document.getElementById('btn-clear-yaku').addEventListener('click', () => {
+        const activeWid = state.activeConfigWinnerId ?? state.winnerIds[0];
+        ensureWinnerConfig(activeWid);
+        state.winnerHandConfigs[activeWid].selectedYaku = [];
+        renderRecorderForm();
+      });
+
+      document.querySelectorAll('.ycat-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          state.yakuCategoryFilter = btn.getAttribute('data-ycat');
+          renderRecorderForm();
+        });
+      });
+
+      document.querySelectorAll('.dora-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const key = btn.getAttribute('data-dora');
+          const delta = Number(btn.getAttribute('data-delta'));
+          const activeWid = state.activeConfigWinnerId ?? state.winnerIds[0];
+          ensureWinnerConfig(activeWid);
+          const cfg = state.winnerHandConfigs[activeWid];
+          cfg[key] = Math.max(0, Math.min(13, (cfg[key] || 0) + delta));
+          renderRecorderForm();
+        });
+      });
+
+      document.getElementById('select-fu').addEventListener('change', (e) => {
+        const activeWid = state.activeConfigWinnerId ?? state.winnerIds[0];
+        ensureWinnerConfig(activeWid);
+        state.winnerHandConfigs[activeWid].fu = Number(e.target.value);
+        renderRecorderForm();
+      });
+
+      document.getElementById('chk-manual-score').addEventListener('change', (e) => {
+        const activeWid = state.activeConfigWinnerId ?? state.winnerIds[0];
+        ensureWinnerConfig(activeWid);
+        state.winnerHandConfigs[activeWid].manualScoreEnabled = e.target.checked;
+        document.getElementById('manual-score-box').classList.toggle('hidden', !e.target.checked);
+        renderRecorderForm();
+      });
+      document.getElementById('input-manual-score').addEventListener('input', (e) => {
+        const activeWid = state.activeConfigWinnerId ?? state.winnerIds[0];
+        ensureWinnerConfig(activeWid);
+        state.winnerHandConfigs[activeWid].manualScoreValue = Number(e.target.value);
+        renderRecorderForm();
+      });
+
+      // Protected Submit Win & Draw
+      document.getElementById('btn-submit-win').addEventListener('click', () => requireAdminAuth(handleWinSubmit));
+      document.getElementById('btn-submit-draw').addEventListener('click', () => requireAdminAuth(handleDrawSubmit));
+
+      document.getElementById('filter-history-player').addEventListener('change', renderFeedsAndHistory);
+      document.getElementById('filter-history-type').addEventListener('change', renderFeedsAndHistory);
+
+      document.getElementById('btn-undo-last').addEventListener('click', () => {
+        requireDeleteAuth(() => {
+          if (state.snapshots.length === 0) return;
+          const prev = state.snapshots.pop();
+          state.players = prev.players;
+          state.roundWind = prev.roundWind;
+          state.roundNum = prev.roundNum;
+          state.honba = prev.honba;
+          state.riichiPot = prev.riichiPot;
+          state.isGameOver = prev.isGameOver;
+          state.history = prev.history;
+          saveToSupabase();
+          renderAll();
+          showToast('↩ 직전 기록이 취소되었습니다.');
+        });
+      });
+      document.getElementById('btn-load-demo').addEventListener('click', () => requireAdminAuth(loadSampleMatch));
+      document.getElementById('btn-reset-match').addEventListener('click', () => requireDeleteAuth(resetNewMatch));
+
+      const modal = document.getElementById('modal-settings');
+      const openSettings = () => {
+        requireAdminAuth(() => {
+          document.getElementById('setting-game-mode').value = state.gameMode;
+          document.getElementById('setting-uma-profile').value = state.umaProfile || 'majsoul_standard';
+          state.players.forEach((p, idx) => {
+            document.getElementById(`input-pname-${idx}`).value = p.name;
+          });
+          document.getElementById('setting-p3-box').classList.toggle('hidden', state.gameMode.startsWith('3p'));
+          modal.classList.remove('hidden');
+        });
+      };
+      document.getElementById('btn-open-settings').addEventListener('click', openSettings);
+      document.getElementById('btn-close-settings').addEventListener('click', () => modal.classList.add('hidden'));
+      document.getElementById('btn-cancel-settings').addEventListener('click', () => modal.classList.add('hidden'));
+      document.getElementById('setting-game-mode').addEventListener('change', (e) => {
+        document.getElementById('setting-p3-box').classList.toggle('hidden', e.target.value.startsWith('3p'));
+      });
+      document.getElementById('btn-save-settings').addEventListener('click', () => {
+        const newMode = document.getElementById('setting-game-mode').value;
+        const newUma = document.getElementById('setting-uma-profile').value;
+        const modeChanged = newMode !== state.gameMode;
+        state.gameMode = newMode;
+        state.umaProfile = newUma;
+        for (let i = 0; i < 4; i++) {
+          const val = document.getElementById(`input-pname-${i}`).value.trim();
+          if (val) state.players[i].name = val;
+        }
+        if (modeChanged) {
+          resetNewMatch();
+        } else {
+          saveToSupabase();
+          renderAll();
+        }
+        modal.classList.add('hidden');
+        showToast('⚙️ 작혼 룰 설정이 적용되었습니다.');
+      });
+
+      document.getElementById('btn-export-summary').addEventListener('click', () => {
+        const standings = calculateMajsoulStandings();
+        let lines = [`[작로그 작혼식 대국 요약 - 총 ${state.history.length}국 진행]`];
+        standings.forEach(st => {
+          lines.push(`${st.rank}위: ${st.name} (${st.score.toLocaleString()}점) | 최종 Pt: ${st.finalPt >= 0 ? '+' : ''}${st.finalPt} pt (우마 ${st.uma})`);
+        });
+        lines.push('\n[주요 화료 내역]');
+        state.history.forEach(h => {
+          if (h.outcome === 'draw') {
+            lines.push(`- ${h.roundLabel} ${h.honba}본장: 유국`);
+          } else {
+            const wDesc = (h.winnerHands || []).map(wh => `${state.players[wh.winnerId]?.name}(${wh.isFuro ? '후로' : '멘젠'}, ${wh.tierName})`).join(' & ');
+            const how = h.outcome === 'ron' ? `${state.players[h.loserId]?.name}에게 론` : '쯔모';
+            lines.push(`- ${h.roundLabel} ${h.honba}본장: ${wDesc} (${how})`);
+          }
+        });
+        const text = lines.join('\n');
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        try {
+          document.execCommand('copy');
+          showToast('📋 최종 정산 및 요약이 클립보드에 복사되었습니다!');
+        } catch (err) {
+          showToast('복사에 실패했습니다.');
+        }
+        document.body.removeChild(ta);
+      });
+    });
+  </script>
+</body>
+</html>
