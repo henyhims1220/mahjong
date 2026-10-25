@@ -3919,7 +3919,7 @@
       showToast('📥 현재 상태가 포함된 HTML 파일이 다운로드되었습니다!');
     }
 
-   async function exportMatchSummaryImage() {
+  async function exportMatchSummaryImage() {
       if (typeof html2canvas === 'undefined') {
         showToast('⚠️ html2canvas 라이브러리를 불러오지 못했습니다.');
         return;
@@ -3933,7 +3933,7 @@
       const isScoreOnly = state.history.length === 0;
       const startScore = getStartingScore();
 
-      // 1. 임시 렌더링 컨테이너 생성 (스크린샷 비율에 맞춘 980px 너비)
+      // 1. 임시 렌더링 컨테이너 생성
       const wrapper = document.createElement('div');
       wrapper.style.position = 'fixed';
       wrapper.style.top = '-9999px';
@@ -3947,7 +3947,7 @@
       wrapper.style.border = '1px solid #1e293b';
       wrapper.style.boxSizing = 'border-box';
 
-      // (1) 상단 순위 카드 HTML 구성
+      // (1) 상단 순위 카드 HTML 구성 (정렬 및 패딩 고정)
       const standingsCardsHtml = standings.map(st => {
         const isFirst = st.rank === 1;
         const rankBadgeStyle = isFirst
@@ -3957,65 +3957,52 @@
         const ptColor = st.finalPt >= 0 ? '#10b981' : '#f43f5e';
 
         return `
-          <div style="flex: 1; min-width: 0; background: #0f172a; border-radius: 14px; padding: 14px 16px; ${cardBorder} display: flex; flex-direction: column; justify-content: space-between;">
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
-              <span style="${rankBadgeStyle} font-size: 11px; font-weight: 800; padding: 2px 7px; border-radius: 6px;">${st.rank}위</span>
-              <span style="font-size: 15px; font-weight: 800; color: #ffffff;">${st.name}</span>
+          <div style="flex: 1; min-width: 0; background: #0f172a; border-radius: 14px; padding: 14px 16px; ${cardBorder} display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; height: 22px;">
+              <span style="${rankBadgeStyle} font-size: 11px; font-weight: 800; padding: 2px 7px; border-radius: 6px; line-height: 1.2;">${st.rank}위</span>
+              <span style="font-size: 15px; font-weight: 800; color: #ffffff; letter-spacing: -0.5px;">${st.name}</span>
             </div>
-            <div style="font-size: 12px; color: #94a3b8; display: flex; justify-content: space-between; margin-bottom: 4px;">
+            <div style="font-size: 12px; color: #94a3b8; display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; height: 18px;">
               <span>최종 점수</span>
-              <strong style="color: #ffffff; font-size: 13px;">${st.score.toLocaleString()}점</strong>
+              <strong style="color: #ffffff; font-size: 13px; font-weight: 700;">${st.score.toLocaleString()}점</strong>
             </div>
-            <div style="font-size: 12px; color: #94a3b8; display: flex; justify-content: space-between;">
+            <div style="font-size: 12px; color: #94a3b8; display: flex; justify-content: space-between; align-items: center; height: 18px;">
               <span>최종 승점</span>
-              <strong style="color: ${ptColor}; font-size: 13px;">${st.finalPt >= 0 ? '+' : ''}${st.finalPt} pt</strong>
+              <strong style="color: ${ptColor}; font-size: 13px; font-weight: 700;">${st.finalPt >= 0 ? '+' : ''}${st.finalPt} pt</strong>
             </div>
           </div>
         `;
       }).join('');
 
-      // (2) 하단 플레이어별 상세 데이터 테이블 HTML 구성
+      // (2) 하단 상세 데이터 테이블 HTML 구성 ('주력 화료 역' 컬럼 삭제 및 셀 수직 중앙 정렬)
       const playerStats = computeSingleMatchPlayerStats(activePlayers, state.history);
       const statsRowsHtml = playerStats.map(ps => {
-        const topYakuBadges = ps.topYaku.length > 0
-          ? ps.topYaku.map(([yn, cnt]) => `
-              <span style="background: rgba(16, 185, 129, 0.12); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); padding: 2px 7px; border-radius: 6px; font-size: 10px; font-weight: 600; white-space: nowrap;">
-                ${yn}(${cnt})
-              </span>
-            `).join('')
-          : '<span style="color: #475569; font-size: 11px;">-</span>';
-
         return `
-          <tr style="border-bottom: 1px solid #1e293b;">
-            <td style="padding: 12px 10px; font-weight: 800; color: #ffffff; font-size: 13px;">
+          <tr style="border-bottom: 1px solid #1e293b; height: 46px;">
+            <td style="padding: 0 14px; font-weight: 800; color: #ffffff; font-size: 13px; vertical-align: middle;">
               <div style="display: flex; align-items: center; gap: 8px;">
-                <span style="width: 9px; height: 9px; border-radius: 50%; background: ${ps.color}; display: inline-block;"></span>
-                <span>${ps.name}</span>
+                <span style="width: 9px; height: 9px; border-radius: 50%; background: ${ps.color}; display: inline-block; flex-shrink: 0;"></span>
+                <span style="line-height: 1.2;">${ps.name}</span>
               </div>
             </td>
-            <td style="padding: 12px 6px; text-align: center;">
+            <td style="padding: 0 8px; text-align: center; vertical-align: middle;">
               <span style="color: #10b981; font-weight: 800; font-size: 12px;">${ps.wins}회</span>
               <span style="color: #94a3b8; font-size: 11px;"> (론${ps.rons}/쯔모${ps.tsumos}, ${ps.winRate}%)</span>
             </td>
-            <td style="padding: 12px 6px; text-align: center;">
+            <td style="padding: 0 8px; text-align: center; vertical-align: middle;">
               <span style="color: #f59e0b; font-weight: 800; font-size: 12px;">${ps.avgWinScore > 0 ? ps.avgWinScore.toLocaleString() + '점' : '-'}</span>
               <span style="color: #94a3b8; font-size: 11px;">${ps.maxWinScore > 0 ? ` (최고 +${ps.maxWinScore.toLocaleString()})` : ''}</span>
             </td>
-            <td style="padding: 12px 6px; text-align: center;">
+            <td style="padding: 0 8px; text-align: center; vertical-align: middle;">
               <span style="color: #f43f5e; font-weight: 800; font-size: 12px;">${ps.riichiCount}회</span>
               <span style="color: #94a3b8; font-size: 11px;"> (${ps.riichiRate}%)</span>
             </td>
-            <td style="padding: 12px 6px; text-align: center;">
+            <td style="padding: 0 8px; text-align: center; vertical-align: middle;">
               <span style="color: #fb7185; font-weight: 800; font-size: 12px;">${ps.dealIns}회</span>
               <span style="color: #94a3b8; font-size: 11px;"> (${ps.dealInRate}%)</span>
             </td>
-            <td style="padding: 12px 6px; text-align: center; color: #fb7185; font-weight: 800; font-size: 12px;">
+            <td style="padding: 0 14px; text-align: right; vertical-align: middle; color: #fb7185; font-weight: 800; font-size: 12px;">
               ${ps.avgDealInScore > 0 ? '-' + ps.avgDealInScore.toLocaleString() + '점' : '-'}
-            </td>
-            <td style="padding: 12px 10px;">
-              <div style="display: flex; flex-wrap: wrap; gap: 4px;">
-                ${topYakuBadges}
-              </div>
             </td>
           </tr>
         `;
@@ -4034,7 +4021,7 @@
         </div>
 
         <!-- Section 2: 해당 대국 점수 추이 그래프 -->
-        <div style="background: #09101a; border-radius: 14px; border: 1px solid #1e293b; padding: 16px 20px; margin-bottom: 22px;">
+        <div style="background: #09101a; border-radius: 14px; border: 1px solid #1e293b; padding: 16px 20px; margin-bottom: 22px; box-sizing: border-box;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
             <div style="font-size: 13px; font-weight: 800; color: #ffffff; display: flex; align-items: center; gap: 6px;">
               <span>📈</span> 해당 대국 점수 추이 그래프
@@ -4046,7 +4033,7 @@
           <div style="display: flex; justify-content: center; gap: 18px; margin-bottom: 12px;">
             ${activePlayers.map((p, idx) => `
               <div style="display: flex; align-items: center; gap: 6px; font-size: 11px; color: #cbd5e1; font-weight: 600;">
-                <span style="width: 14px; height: 8px; border-radius: 2px; background: ${PLAYER_COLORS[idx]};"></span>
+                <span style="width: 14px; height: 8px; border-radius: 2px; background: ${PLAYER_COLORS[idx]}; display: inline-block;"></span>
                 <span>${p.name}</span>
               </div>
             `).join('')}
@@ -4058,22 +4045,29 @@
           </div>
         </div>
 
-        <!-- Section 3: 플레이어별 대국 상세 데이터 -->
+        <!-- Section 3: 플레이어별 대국 상세 데이터 (테이블 컬럼 재배치) -->
         <div>
           <div style="font-size: 13px; font-weight: 800; color: #38bdf8; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
             <span>📊</span> 플레이어별 대국 상세 데이터 (화료·평균 타점·리치·방총)
           </div>
           <div style="background: #09101a; border-radius: 14px; border: 1px solid #1e293b; overflow: hidden;">
-            <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 11px;">
+            <table style="width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 11px;">
+              <colgroup>
+                <col style="width: 17%;">
+                <col style="width: 20%;">
+                <col style="width: 21%;">
+                <col style="width: 14%;">
+                <col style="width: 14%;">
+                <col style="width: 14%;">
+              </colgroup>
               <thead>
-                <tr style="border-bottom: 1px solid #1e293b; color: #94a3b8; font-weight: 700;">
-                  <th style="padding: 10px;">플레이어</th>
-                  <th style="padding: 10px 6px; text-align: center; color: #34d399;">화료 횟수 (화료율)</th>
-                  <th style="padding: 10px 6px; text-align: center; color: #fbbf24;">평균 화료 타점 (최고)</th>
-                  <th style="padding: 10px 6px; text-align: center; color: #f472b6;">리치 횟수 (리치율)</th>
-                  <th style="padding: 10px 6px; text-align: center; color: #fb7185;">방총 횟수 (방총률)</th>
-                  <th style="padding: 10px 6px; text-align: center; color: #fb7185;">평균 방총 실점</th>
-                  <th style="padding: 10px;">주력 화료 역</th>
+                <tr style="border-bottom: 1px solid #1e293b; color: #94a3b8; font-weight: 700; height: 38px;">
+                  <th style="padding: 0 14px; text-align: left;">플레이어</th>
+                  <th style="padding: 0 8px; text-align: center; color: #34d399;">화료 횟수 (화료율)</th>
+                  <th style="padding: 0 8px; text-align: center; color: #fbbf24;">평균 화료 타점 (최고)</th>
+                  <th style="padding: 0 8px; text-align: center; color: #f472b6;">리치 횟수 (리치율)</th>
+                  <th style="padding: 0 8px; text-align: center; color: #fb7185;">방총 횟수 (방총률)</th>
+                  <th style="padding: 0 14px; text-align: right; color: #fb7185;">평균 방총 실점</th>
                 </tr>
               </thead>
               <tbody>
@@ -4090,7 +4084,7 @@
 
       document.body.appendChild(wrapper);
 
-      // 2. Chart.js 인스턴스 임시 생성 및 렌더링
+      // 2. Chart.js 인스턴스 렌더링
       const ctx = document.getElementById('temp-summary-export-chart').getContext('2d');
       const chartLabels = isScoreOnly
         ? ['대국 시작', '최종 점수']
@@ -4118,9 +4112,9 @@
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          animation: false, // 캡처 시 즉시 완성형으로 그리기 위해 애니메이션 비활성화
+          animation: false,
           plugins: {
-            legend: { display: false } // 상단에 커스텀 HTML 범례를 배치했으므로 숨김
+            legend: { display: false }
           },
           scales: {
             x: {
@@ -4139,10 +4133,9 @@
         }
       });
 
-      // 차트가 캔버스에 완전히 그려질 수 있도록 짧은 딜레이 후 캡처
       await new Promise(resolve => setTimeout(resolve, 80));
 
-      // 3. html2canvas로 고화질(scale: 2) 캡처 및 이미지 다운로드
+      // 3. html2canvas로 캡처 및 다운로드
       try {
         const canvas = await html2canvas(wrapper, {
           scale: 2,
