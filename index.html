@@ -4023,7 +4023,7 @@
       showToast('📥 현재 상태가 포함된 HTML 파일이 다운로드되었습니다!');
     }
 
-      async function exportMatchSummaryImage(customTitle) {
+     async function exportMatchSummaryImage(customTitle) {
       if (typeof html2canvas === 'undefined') {
         showToast('⚠️ html2canvas 라이브러리를 불러오지 못했습니다.');
         return;
@@ -4031,23 +4031,24 @@
 
       showToast('📸 고화질 결과 리포트 이미지를 생성하는 중입니다...');
 
-      const standings = calculateMajsoulStandings();
-      const pCount = getPlayerCount();
-      const activePlayers = state.players.slice(0, pCount);
-      const isScoreOnly = state.history.length === 0;
-      const startScore = getStartingScore();
-
-      // 사용자가 입력한 제목 정리 (비어있으면 기본 이름)
-      const displayTitle = (customTitle || '').trim() || `작로그 대국 결과 리포트`;
+      const arch = currentExportArchiveId ? state.archives.find(a => a.id === currentExportArchiveId) : null;
+      const targetPlayers = arch ? (arch.players || state.players) : state.players;
+      const targetHistory = arch ? (arch.history || []) : state.history;
       
-      // 1. 임시 렌더링 컨테이너 생성
+      const pCount = arch ? (arch.gameMode && arch.gameMode.startsWith('3p') ? 3 : 4) : getPlayerCount();
+      const activePlayers = targetPlayers.slice(0, pCount);
+      const standings = arch ? (arch.standings || calculateMajsoulStandings(targetPlayers, arch.gameMode, arch.umaProfile)) : calculateMajsoulStandings();
+      const isScoreOnly = arch ? (arch.recordType === 'score_only' || targetHistory.length === 0) : (state.history.length === 0);
+      const startScore = arch ? (arch.gameMode && arch.gameMode.startsWith('3p') ? 35000 : 25000) : getStartingScore();
+
+      // ✅ 에러 방지: 이벤트 객체가 넘어올 경우 안전하게 텍스트로 전환
+      const displayTitle = (typeof customTitle === 'string' ? customTitle : '').trim() || `작로그 대국 결과 리포트`;
+      
+      // 1. 임시 렌더링 컨테이너 생성 (투명도를 쓰지 않고 화면 왼쪽 밖으로 이동)
       const wrapper = document.createElement('div');
       wrapper.style.position = 'absolute';
-      wrapper.style.top = '0';
-      wrapper.style.left = '0';
-      wrapper.style.zIndex = '-9999';
-      wrapper.style.opacity = '0';
-      wrapper.style.pointerEvents = 'none';
+      wrapper.style.top = '0px';
+      wrapper.style.left = '-9999px';
       wrapper.style.width = '980px';
       wrapper.style.backgroundColor = '#0b131e';
       wrapper.style.color = '#f1f5f9';
@@ -4057,7 +4058,6 @@
       wrapper.style.border = '1px solid #1e293b';
       wrapper.style.boxSizing = 'border-box';
 
-      // (1) 상단 순위 카드 HTML 구성 (수직 정렬 적용)
       const standingsCardsHtml = standings.map(st => {
         const isFirst = st.rank === 1;
         const rankBadgeStyle = isFirst
@@ -4084,44 +4084,9 @@
         `;
       }).join('');
 
-       // (2) 하단 상세 데이터 테이블 HTML 구성 (수직 중앙 정렬 및 쏠림 방지)
-      const playerStats = computeSingleMatchPlayerStats(activePlayers, state.history);
-      const statsRowsHtml = playerStats.map(ps => {
-        return `
-          <tr style="border-bottom: 1px solid #1e293b; height: 50px;">
-            <td style="padding: 0 14px; font-weight: 800; color: #ffffff; font-size: 13px; text-align: left; vertical-align: middle;">
-              <div style="display: flex; align-items: center; gap: 8px;">
-                <span style="width: 9px; height: 9px; border-radius: 50%; background: ${ps.color}; display: inline-block; flex-shrink: 0;"></span>
-                <span>${ps.name}</span>
-              </div>
-            </td>
-            <td style="padding: 0 8px; text-align: center; vertical-align: middle;">
-              <span style="color: #10b981; font-weight: 800; font-size: 12px;">${ps.wins}회</span>
-              <span style="color: #94a3b8; font-size: 11px;"> (론${ps.rons}/쯔모${ps.tsumos}, ${ps.winRate}%)</span>
-            </td>
-            <td style="padding: 0 8px; text-align: center; vertical-align: middle;">
-              <span style="color: #f59e0b; font-weight: 800; font-size: 12px;">${ps.avgWinScore > 0 ? ps.avgWinScore.toLocaleString() + '점' : '-'}</span>
-              <span style="color: #94a3b8; font-size: 11px;">${ps.maxWinScore > 0 ? ` (최고 +${ps.maxWinScore.toLocaleString()})` : ''}</span>
-            </td>
-            <td style="padding: 0 8px; text-align: center; vertical-align: middle;">
-              <span style="color: #f43f5e; font-weight: 800; font-size: 12px;">${ps.riichiCount}회</span>
-              <span style="color: #94a3b8; font-size: 11px;"> (${ps.riichiRate}%)</span>
-            </td>
-            <td style="padding: 0 8px; text-align: center; vertical-align: middle;">
-              <span style="color: #fb7185; font-weight: 800; font-size: 12px;">${ps.dealIns}회</span>
-              <span style="color: #94a3b8; font-size: 11px;"> (${ps.dealInRate}%)</span>
-            </td>
-            <td style="padding: 0 14px; text-align: right; vertical-align: middle; color: #fb7185; font-weight: 800; font-size: 12px;">
-              ${ps.avgDealInScore > 0 ? '-' + ps.avgDealInScore.toLocaleString() + '점' : '-'}
-            </td>
-          </tr>
-        `;
-      }).join('');
-
+      const playerStats = computeSingleMatchPlayerStats(activePlayers, targetHistory);
         
-     // 전체 레이아웃 조립 (표 대신 Flexbox 구조를 사용하여 수직 정렬 완벽 고정)
       wrapper.innerHTML = `
-        <!-- 이미지 상단에 표시되는 타이틀 헤더 -->
         <div style="margin-bottom: 22px; border-bottom: 2px solid #10b981; padding-bottom: 12px; display: flex; align-items: center; justify-content: space-between;">
           <div style="display: flex; align-items: center; gap: 10px;">
             <span style="font-size: 22px; display: inline-flex; align-items: center; line-height: 1;">🀄</span>
@@ -4130,7 +4095,6 @@
           <span style="font-size: 11px; color: #94a3b8; background: #1e293b; padding: 4px 10px; border-radius: 6px; display: inline-flex; align-items: center; line-height: 1;">작로그 (JangLog) 대국 리포트</span>
         </div>
 
-        <!-- Section 1: 최종 순위 및 우마·오카 포인트 -->
         <div style="margin-bottom: 20px;">
           <div style="font-size: 13px; font-weight: 800; color: #fbbf24; margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
             <span style="display: inline-flex; align-items: center; line-height: 1;">🏆</span> 최종 순위 및 우마·오카 포인트
@@ -4140,7 +4104,6 @@
           </div>
         </div>
 
-        <!-- Section 2: 해당 대국 점수 추이 그래프 -->
         <div style="background: #09101a; border-radius: 14px; border: 1px solid #1e293b; padding: 16px 20px; margin-bottom: 22px; box-sizing: border-box;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
             <div style="font-size: 13px; font-weight: 800; color: #ffffff; display: flex; align-items: center; gap: 6px;">
@@ -4148,8 +4111,6 @@
             </div>
             <span style="font-size: 11px; color: #64748b; display: inline-flex; align-items: center; line-height: 1;">국별 점수 변동</span>
           </div>
-
-          <!-- 범례 (Legend) -->
           <div style="display: flex; justify-content: center; align-items: center; gap: 18px; margin-bottom: 12px;">
             ${activePlayers.map((p, idx) => `
               <div style="display: flex; align-items: center; gap: 6px; font-size: 11px; color: #cbd5e1; font-weight: 600;">
@@ -4158,20 +4119,16 @@
               </div>
             `).join('')}
           </div>
-
-          <!-- 차트 캔버스 -->
           <div style="position: relative; width: 100%; height: 260px;">
             <canvas id="temp-summary-export-chart"></canvas>
           </div>
         </div>
 
-        <!-- Section 3: 플레이어별 대국 상세 데이터 (Flexbox 기반으로 변경하여 정렬 완벽 제어) -->
         <div>
           <div style="font-size: 13px; font-weight: 800; color: #38bdf8; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
             <span style="display: inline-flex; align-items: center; line-height: 1;">📊</span> 플레이어별 대국 상세 데이터 (화료·평균 타점·리치·방총)
           </div>
           <div style="background: #09101a; border-radius: 14px; border: 1px solid #1e293b; overflow: hidden; font-size: 11px;">
-            <!-- 헤더 행 -->
             <div style="display: flex; align-items: center; border-bottom: 1px solid #1e293b; color: #94a3b8; font-weight: 700; height: 38px; padding: 0 16px;">
               <div style="flex: 1.2; text-align: left;">플레이어</div>
               <div style="flex: 1.5; text-align: center; color: #34d399;">화료 횟수 (화료율)</div>
@@ -4180,7 +4137,6 @@
               <div style="flex: 1.1; text-align: center; color: #fb7185;">방총 횟수 (방총률)</div>
               <div style="flex: 1.1; text-align: right; color: #fb7185;">평균 방총 실점</div>
             </div>
-            <!-- 데이터 행들 -->
             <div>
               ${playerStats.map(ps => `
                 <div style="display: flex; align-items: center; border-bottom: 1px solid #1e293b; height: 50px; padding: 0 16px;">
@@ -4212,7 +4168,6 @@
             </div>
           </div>
         </div>
-
         <div style="margin-top: 14px; text-align: right; font-size: 10px; color: #475569;">
           작로그 (JangLog) · ${new Date().toLocaleDateString()} 대국 리포트
         </div>
@@ -4224,12 +4179,12 @@
       const ctx = document.getElementById('temp-summary-export-chart').getContext('2d');
       const chartLabels = isScoreOnly
         ? ['대국 시작', '최종 점수']
-        : ['시작', ...state.history.map((h, i) => `${i + 1}. ${h.roundLabel}`)];
+        : ['시작', ...targetHistory.map((h, i) => `${i + 1}. ${h.roundLabel}`)];
 
       const chartDatasets = activePlayers.map((p, idx) => {
         const data = isScoreOnly
           ? [startScore, p.score]
-          : [startScore, ...state.history.map(h => (h.scoresAfter && h.scoresAfter[idx] !== undefined) ? h.scoresAfter[idx] : p.score)];
+          : [startScore, ...targetHistory.map(h => (h.scoresAfter && h.scoresAfter[idx] !== undefined) ? h.scoresAfter[idx] : p.score)];
         return {
           label: p.name,
           data,
@@ -4249,27 +4204,18 @@
           responsive: true,
           maintainAspectRatio: false,
           animation: false,
-          plugins: {
-            legend: { display: false }
-          },
+          plugins: { legend: { display: false } },
           scales: {
-            x: {
-              ticks: { color: '#94a3b8', font: { size: 10, family: "'Noto Sans KR', sans-serif" } },
-              grid: { color: 'rgba(30, 41, 59, 0.7)' }
-            },
+            x: { ticks: { color: '#94a3b8', font: { size: 10, family: "'Noto Sans KR', sans-serif" } }, grid: { color: 'rgba(30, 41, 59, 0.7)' } },
             y: {
-              ticks: {
-                color: '#94a3b8',
-                font: { size: 10, family: "'Noto Sans KR', sans-serif" },
-                callback: (val) => val.toLocaleString()
-              },
+              ticks: { color: '#94a3b8', font: { size: 10, family: "'Noto Sans KR', sans-serif" }, callback: (val) => val.toLocaleString() },
               grid: { color: 'rgba(30, 41, 59, 0.7)' }
             }
           }
         }
       });
 
-      await new Promise(resolve => setTimeout(resolve, 80));
+      await new Promise(resolve => setTimeout(resolve, 150));
 
       // 3. html2canvas로 캡처 및 다운로드
       try {
@@ -4290,7 +4236,7 @@
         link.download = `${safeTitle}.png`;
         link.href = image;
         
-        // 브라우저에서 다운로드가 실행되도록 DOM에 임시 추가 후 삭제
+        // DOM에 임시 추가 후 다운로드 클릭 실행
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -4913,7 +4859,14 @@
         modal.classList.add('hidden');
         showToast('⚙️ 작혼 룰 설정이 적용되었습니다.');
       });
-      document.getElementById('btn-export-image').addEventListener('click', exportMatchSummaryImage);
+      const btnExportHeader = document.getElementById('btn-export-image');
+      if (btnExportHeader) {
+        btnExportHeader.addEventListener('click', () => {
+          if (typeof window.openImageExportModal === 'function') {
+            window.openImageExportModal();
+          }
+        });
+      }
       document.getElementById('btn-export-summary').addEventListener('click', () => {
         const standings = calculateMajsoulStandings();
         let lines = [`[작로그 작혼식 대국 요약 - 총 ${state.history.length}국 진행]`];
