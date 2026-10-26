@@ -4041,10 +4041,9 @@
       const isScoreOnly = arch ? (arch.recordType === 'score_only' || targetHistory.length === 0) : (state.history.length === 0);
       const startScore = arch ? (arch.gameMode && arch.gameMode.startsWith('3p') ? 35000 : 25000) : getStartingScore();
 
-      // ✅ 에러 방지: 이벤트 객체가 넘어올 경우 안전하게 텍스트로 전환
       const displayTitle = (typeof customTitle === 'string' ? customTitle : '').trim() || `작로그 대국 결과 리포트`;
       
-      // 1. 임시 렌더링 컨테이너 생성 (투명도를 쓰지 않고 화면 왼쪽 밖으로 이동)
+      // 렌더링 컨테이너 (화면 왼쪽 밖으로 숨김)
       const wrapper = document.createElement('div');
       wrapper.style.position = 'absolute';
       wrapper.style.top = '0px';
@@ -4060,9 +4059,7 @@
 
       const standingsCardsHtml = standings.map(st => {
         const isFirst = st.rank === 1;
-        const rankBadgeStyle = isFirst
-          ? 'background: #f59e0b; color: #0f172a;'
-          : 'background: #1e293b; color: #cbd5e1;';
+        const rankBadgeStyle = isFirst ? 'background: #f59e0b; color: #0f172a;' : 'background: #1e293b; color: #cbd5e1;';
         const cardBorder = isFirst ? 'border: 1px solid rgba(245, 158, 11, 0.4);' : 'border: 1px solid #1e293b;';
         const ptColor = st.finalPt >= 0 ? '#10b981' : '#f43f5e';
 
@@ -4085,7 +4082,7 @@
       }).join('');
 
       const playerStats = computeSingleMatchPlayerStats(activePlayers, targetHistory);
-        
+      
       wrapper.innerHTML = `
         <div style="margin-bottom: 22px; border-bottom: 2px solid #10b981; padding-bottom: 12px; display: flex; align-items: center; justify-content: space-between;">
           <div style="display: flex; align-items: center; gap: 10px;">
@@ -4126,15 +4123,15 @@
 
         <div>
           <div style="font-size: 13px; font-weight: 800; color: #38bdf8; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
-            <span style="display: inline-flex; align-items: center; line-height: 1;">📊</span> 플레이어별 대국 상세 데이터 (화료·평균 타점·리치·방총)
+            <span style="display: inline-flex; align-items: center; line-height: 1;">📊</span> 플레이어별 대국 상세 데이터
           </div>
           <div style="background: #09101a; border-radius: 14px; border: 1px solid #1e293b; overflow: hidden; font-size: 11px;">
             <div style="display: flex; align-items: center; border-bottom: 1px solid #1e293b; color: #94a3b8; font-weight: 700; height: 38px; padding: 0 16px;">
               <div style="flex: 1.2; text-align: left;">플레이어</div>
               <div style="flex: 1.5; text-align: center; color: #34d399;">화료 횟수 (화료율)</div>
               <div style="flex: 1.6; text-align: center; color: #fbbf24;">평균 화료 타점 (최고)</div>
-              <div style="flex: 1.1; text-align: center; color: #f472b6;">리치 횟수 (리치율)</div>
-              <div style="flex: 1.1; text-align: center; color: #fb7185;">방총 횟수 (방총률)</div>
+              <div style="flex: 1.1; text-align: center; color: #f472b6;">리치 (리치율)</div>
+              <div style="flex: 1.1; text-align: center; color: #fb7185;">방총 (방총률)</div>
               <div style="flex: 1.1; text-align: right; color: #fb7185;">평균 방총 실점</div>
             </div>
             <div>
@@ -4150,7 +4147,7 @@
                   </div>
                   <div style="flex: 1.6; text-align: center;">
                     <span style="color: #f59e0b; font-weight: 800; font-size: 12px;">${ps.avgWinScore > 0 ? ps.avgWinScore.toLocaleString() + '점' : '-'}</span>
-                    <span style="color: #94a3b8; font-size: 10px;">${ps.maxWinScore > 0 ? ` (최고 +${ps.maxWinScore.toLocaleString()})` : ''}</span>
+                    <span style="color: #94a3b8; font-size: 10px;">${ps.maxWinScore > 0 ? ` (+${ps.maxWinScore.toLocaleString()})` : ''}</span>
                   </div>
                   <div style="flex: 1.1; text-align: center;">
                     <span style="color: #f43f5e; font-weight: 800; font-size: 12px;">${ps.riichiCount}회</span>
@@ -4171,11 +4168,10 @@
         <div style="margin-top: 14px; text-align: right; font-size: 10px; color: #475569;">
           작로그 (JangLog) · ${new Date().toLocaleDateString()} 대국 리포트
         </div>
-       `;
+      `;
         
       document.body.appendChild(wrapper);
 
-      // 2. Chart.js 인스턴스 렌더링
       const ctx = document.getElementById('temp-summary-export-chart').getContext('2d');
       const chartLabels = isScoreOnly
         ? ['대국 시작', '최종 점수']
@@ -4217,7 +4213,6 @@
 
       await new Promise(resolve => setTimeout(resolve, 150));
 
-      // 3. html2canvas로 캡처 및 다운로드
       try {
         const canvas = await html2canvas(wrapper, {
           scale: 2,
@@ -4231,12 +4226,10 @@
         const image = canvas.toDataURL('image/png');
         const link = document.createElement('a');
         
-        // 입력한 제목으로 파일명 설정 (사용 불가 특수문자 자동 치환)
         const safeTitle = displayTitle.replace(/[\/\\:*?"<>|]/g, '_');
         link.download = `${safeTitle}.png`;
         link.href = image;
         
-        // DOM에 임시 추가 후 다운로드 클릭 실행
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -4248,668 +4241,27 @@
         showToast('❌ 이미지 생성 중 오류가 발생했습니다.');
       }
     }
-        
-    function openFinalScoreModal() {
-      const pCount = getPlayerCount();
-      const expectedSum = pCount * getStartingScore();
-      document.getElementById('final-expected-sum').textContent = expectedSum.toLocaleString();
 
-      const container = document.getElementById('final-score-inputs-container');
-      container.innerHTML = '';
+    const imageTitleModal = document.getElementById('modal-image-title');
 
-      state.players.slice(0, pCount).forEach((p, idx) => {
-        const row = document.createElement('div');
-        row.className = 'flex items-center justify-between gap-3 bg-slate-950 p-2.5 rounded-xl border border-slate-800';
-        row.innerHTML = `
-          <div class="flex items-center gap-2">
-            <span class="w-6 h-6 rounded-lg bg-slate-800 text-xs font-bold flex items-center justify-center text-slate-300">${WIND_NAMES[idx]}</span>
-            <input type="text" id="final-pname-${idx}" value="${p.name}" class="w-28 bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs font-bold text-white" />
-          </div>
-          <div class="flex items-center gap-1.5">
-            <input type="number" id="final-pscore-${idx}" step="100" value="${p.score}" class="final-score-input w-28 bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-sm font-black text-emerald-300 text-right" />
-            <span class="text-xs text-slate-400">점</span>
-          </div>
-        `;
-        container.appendChild(row);
-      });
+    // 모달 오픈 전역 함수
+    window.openImageExportModal = function(archId = null) {
+      currentExportArchiveId = archId;
+      const defaultTitle = `작로그_대국결과_${new Date().toISOString().slice(0, 10)}`;
+      document.getElementById('input-image-title').value = defaultTitle;
+      imageTitleModal.classList.remove('hidden');
+      setTimeout(() => document.getElementById('input-image-title').select(), 50);
+    };
 
-      document.querySelectorAll('.final-score-input').forEach(inp => {
-        inp.addEventListener('input', updateFinalScoreModalPreview);
-      });
-      updateFinalScoreModalPreview();
-      document.getElementById('modal-final-score').classList.remove('hidden');
-    }
-
-    function updateFinalScoreModalPreview() {
-      const pCount = getPlayerCount();
-      const expectedSum = pCount * getStartingScore();
-      const tempPlayers = [];
-      let sum = 0;
-
-      for (let i = 0; i < pCount; i++) {
-        const nameVal = document.getElementById(`final-pname-${i}`)?.value.trim() || state.players[i].name;
-        const scoreVal = Number(document.getElementById(`final-pscore-${i}`)?.value) || 0;
-        sum += scoreVal;
-        tempPlayers.push({ id: i, name: nameVal, score: scoreVal });
-      }
-
-      const diff = sum - expectedSum;
-      const sumBadge = document.getElementById('final-current-sum-badge');
-      if (diff === 0) {
-        sumBadge.textContent = `현재 합계: ${sum.toLocaleString()}점 (일치 ✓)`;
-        sumBadge.className = 'font-bold text-emerald-400';
-      } else {
-        sumBadge.textContent = `현재 합계: ${sum.toLocaleString()}점 (${diff > 0 ? '+' : ''}${diff.toLocaleString()}점 오차)`;
-        sumBadge.className = 'font-bold text-amber-400';
-      }
-
-      const standings = calculateMajsoulStandings(tempPlayers);
-      const previewEl = document.getElementById('final-score-preview-list');
-      previewEl.innerHTML = standings.map(st => `
-        <div class="bg-slate-900 p-2 rounded-lg border border-slate-800 flex items-center justify-between">
-          <span><strong>${st.rank}위</strong> ${st.name}</span>
-          <span class="font-bold ${st.finalPt >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${st.finalPt >= 0 ? '+' : ''}${st.finalPt} pt</span>
-        </div>
-      `).join('');
-    }
-
-    window.addEventListener('DOMContentLoaded', async () => {
-      let loaded = await loadFromSupabase();
-      if (!loaded) {
-        try {
-          const localRaw = localStorage.getItem('janglog_state_v2');
-          if (localRaw) {
-            state = Object.assign(state, JSON.parse(localRaw));
-            if (!state.security) state.security = { adminPwHash: null };
-            loaded = true;
-          }
-        } catch (e) {}
-      }
-      if (!loaded) {
-        loadSampleMatch();
-      } else {
-        renderAll();
-      }
-
-      if (supabaseClient) {
-        supabaseClient
-          .channel('public:match_sessions')
-          .on('postgres_changes', {
-            event: '*',
-            schema: 'public',
-            table: 'match_sessions',
-            filter: `room_code=eq.${ROOM_ID}`
-          }, payload => {
-            if (payload.new && payload.new.state_data) {
-              state = Object.assign(state, payload.new.state_data);
-              if (!Array.isArray(state.archives)) state.archives = [];
-              if (!state.security) state.security = { adminPwHash: null };
-              renderAll();
-              showToast('🔄 다른 기기의 변경사항이 실시간 동기화되었습니다!');
-            }
-          })
-          .subscribe();
-      }
-
-      // --- PASSWORD MODAL LISTENERS (DUAL RECORD PW & DELETE PW) ---
-      const authModal = document.getElementById('modal-auth-pw');
-      document.getElementById('btn-auth-lock').addEventListener('click', () => {
-        if (hasPasswordsConfigured() && isRecordAuthorizedSession) {
-          isRecordAuthorizedSession = false;
-          updateLockUI();
-          showToast('🔒 기록 권한이 다시 잠겼습니다.');
-        } else {
-          openAuthModal(null, 'record');
-        }
-      });
-      document.getElementById('btn-close-auth-modal').addEventListener('click', () => authModal.classList.add('hidden'));
-      document.getElementById('btn-cancel-setup-pw').addEventListener('click', () => authModal.classList.add('hidden'));
-      document.getElementById('btn-cancel-verify-pw').addEventListener('click', () => authModal.classList.add('hidden'));
-
-      document.getElementById('btn-save-setup-pw').addEventListener('click', async () => {
-        const recPw = document.getElementById('input-setup-record-pw').value;
-        const delPw = document.getElementById('input-setup-delete-pw').value;
-        const errEl = document.getElementById('auth-setup-error');
-
-        if (!recPw || recPw.length < 2) {
-          errEl.textContent = '⚠️ 기록용 비밀번호를 2자 이상 입력해 주세요.';
-          errEl.classList.remove('hidden');
-          return;
-        }
-        if (!delPw || delPw.length < 2) {
-          errEl.textContent = '⚠️ 삭제용 비밀번호를 2자 이상 입력해 주세요.';
-          errEl.classList.remove('hidden');
-          return;
-        }
-
-        normalizeSecurityState();
-        state.security.recordPwHash = await hashPassword(recPw);
-        state.security.deletePwHash = await hashPassword(delPw);
-        state.security.adminPwHash = state.security.recordPwHash;
-        isRecordAuthorizedSession = true;
-        authModal.classList.add('hidden');
-        saveToStorage();
-        updateLockUI();
-        showToast('👑 기록용 PW와 삭제용 PW가 각각 설정되었습니다!');
-        if (typeof pendingProtectedAction === 'function') {
-          const fn = pendingProtectedAction;
-          pendingProtectedAction = null;
-          fn();
-        }
-      });
-
-      const handleVerifySubmit = async () => {
-        normalizeSecurityState();
-        const inputVal = document.getElementById('input-verify-pw').value;
-        const errEl = document.getElementById('auth-verify-error');
-        const hashedInput = await hashPassword(inputVal);
-
-        if (currentAuthMode === 'delete') {
-          if (hashedInput !== state.security.deletePwHash) {
-            errEl.textContent = '❌ 삭제용 비밀번호(삭제 PW)가 일치하지 않습니다.';
-            errEl.classList.remove('hidden');
-            return;
-          }
-          authModal.classList.add('hidden');
-          showToast('🔓 삭제용 비밀번호 확인 완료!');
-        } else {
-          if (hashedInput !== state.security.recordPwHash && hashedInput !== state.security.deletePwHash) {
-            errEl.textContent = '❌ 기록용 비밀번호(기록 PW)가 일치하지 않습니다.';
-            errEl.classList.remove('hidden');
-            return;
-          }
-          const keepUnlocked = document.getElementById('chk-keep-unlocked').checked;
-          isRecordAuthorizedSession = keepUnlocked;
-          authModal.classList.add('hidden');
-          updateLockUI();
-          showToast('🔓 기록 권한 비밀번호 확인 완료!');
-        }
-
-        if (typeof pendingProtectedAction === 'function') {
-          const fn = pendingProtectedAction;
-          pendingProtectedAction = null;
-          fn();
-        }
-      };
-
-      document.getElementById('btn-confirm-verify-pw').addEventListener('click', handleVerifySubmit);
-      document.getElementById('input-verify-pw').addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-          e.preventDefault();
-          handleVerifySubmit();
-        }
-      });
-
-      document.getElementById('btn-toggle-change-pw-view').addEventListener('click', () => {
-        document.getElementById('auth-change-panel').classList.toggle('hidden');
-        document.getElementById('input-current-pw').value = '';
-        document.getElementById('input-change-record-pw').value = '';
-        document.getElementById('input-change-delete-pw').value = '';
-      });
-      document.getElementById('btn-cancel-change-pw').addEventListener('click', () => {
-        document.getElementById('auth-change-panel').classList.add('hidden');
-      });
-      document.getElementById('btn-save-change-pw').addEventListener('click', async () => {
-        normalizeSecurityState();
-        const curPw = document.getElementById('input-current-pw').value;
-        const newRecPw = document.getElementById('input-change-record-pw').value;
-        const newDelPw = document.getElementById('input-change-delete-pw').value;
-        const errEl = document.getElementById('auth-change-error');
-
-        const curHashed = await hashPassword(curPw);
-        if (curHashed !== state.security.recordPwHash && curHashed !== state.security.deletePwHash) {
-          errEl.textContent = '❌ 현재 비밀번호(기록 PW 또는 삭제 PW)가 일치하지 않아 변경할 수 없습니다.';
-          errEl.classList.remove('hidden');
-          return;
-        }
-        if (!newRecPw && !newDelPw) {
-          errEl.textContent = '⚠️ 변경할 새 기록용 PW 또는 새 삭제용 PW를 입력해 주세요.';
-          errEl.classList.remove('hidden');
-          return;
-        }
-        if (newRecPw && newRecPw.length < 2) {
-          errEl.textContent = '⚠️ 새 기록용 비밀번호를 2자 이상 입력해 주세요.';
-          errEl.classList.remove('hidden');
-          return;
-        }
-        if (newDelPw && newDelPw.length < 2) {
-          errEl.textContent = '⚠️ 새 삭제용 비밀번호를 2자 이상 입력해 주세요.';
-          errEl.classList.remove('hidden');
-          return;
-        }
-
-        if (newRecPw) {
-          state.security.recordPwHash = await hashPassword(newRecPw);
-          state.security.adminPwHash = state.security.recordPwHash;
-        }
-        if (newDelPw) {
-          state.security.deletePwHash = await hashPassword(newDelPw);
-        }
-        isRecordAuthorizedSession = true;
-        authModal.classList.add('hidden');
-        saveToStorage();
-        updateLockUI();
-        showToast('🔑 비밀번호가 성공적으로 변경되었습니다!');
-      });
-
-      // Navigation tabs
-      document.getElementById('tab-btn-board').addEventListener('click', () => switchTab('board'));
-      document.getElementById('tab-btn-history').addEventListener('click', () => switchTab('history'));
-      document.getElementById('tab-btn-stats').addEventListener('click', () => switchTab('stats'));
-      document.getElementById('tab-btn-player').addEventListener('click', () => switchTab('player'));
-      document.getElementById('tab-btn-monthly').addEventListener('click', () => switchTab('monthly'));
-      document.getElementById('tab-btn-archive').addEventListener('click', () => switchTab('archive'));
-
-      document.getElementById('select-player-scope').addEventListener('change', renderPlayerProfileTab);
-
-      document.getElementById('btn-banner-view-stats').addEventListener('click', () => switchTab('stats'));
-      document.getElementById('btn-banner-new-match').addEventListener('click', () => requireDeleteAuth(resetNewMatch));
-
-      document.getElementById('btn-download-html').addEventListener('click', downloadHtmlFile);
-
-      const archiveSaveModal = document.getElementById('modal-archive-save');
-      document.getElementById('btn-archive-current').addEventListener('click', () => {
-        requireAdminAuth(() => {
-          document.getElementById('input-archive-save-memo').value = `대국 세션 (${new Date().toLocaleDateString()})`;
-          archiveSaveModal.classList.remove('hidden');
-        });
-      });
-      document.getElementById('btn-close-archive-save').addEventListener('click', () => archiveSaveModal.classList.add('hidden'));
-      document.getElementById('btn-cancel-archive-save').addEventListener('click', () => archiveSaveModal.classList.add('hidden'));
-      document.getElementById('btn-confirm-archive-save').addEventListener('click', () => {
-        const val = document.getElementById('input-archive-save-memo').value.trim() || '대국 아카이브';
-        archiveSaveModal.classList.add('hidden');
-        archiveCurrentMatch(val);
-      });
-
-      document.getElementById('btn-clear-archive').addEventListener('click', () => {
-        requireDeleteAuth(() => {
-          state.archives = [];
-          saveToStorage();
-          renderAll();
-          showToast('🗑️ 모든 아카이브가 비워졌습니다.');
-        });
-      });
-
-      const archiveModal = document.getElementById('modal-archive-detail');
-      document.getElementById('btn-close-archive-modal').addEventListener('click', () => archiveModal.classList.add('hidden'));
-      document.getElementById('btn-close-archive-detail').addEventListener('click', () => archiveModal.classList.add('hidden'));
-
-      document.getElementById('btn-restore-archive-to-board').addEventListener('click', () => {
-        requireAdminAuth(() => {
-          const arch = state.archives.find(a => a.id === state.viewingArchiveId);
-          if (!arch) return;
-          saveSnapshot();
-          state.players = JSON.parse(JSON.stringify(arch.players || state.players));
-          state.history = JSON.parse(JSON.stringify(arch.history || []));
-          state.gameMode = arch.gameMode || state.gameMode;
-          state.umaProfile = arch.umaProfile || state.umaProfile;
-          state.isGameOver = false;
-          archiveModal.classList.add('hidden');
-          saveToStorage();
-          renderAll();
-          switchTab('board');
-          showToast('🔄 선택한 아카이브 대국이 현재 보드로 복원되었습니다!');
-        });
-      });
-
-      const finalScoreModal = document.getElementById('modal-final-score');
-      document.getElementById('btn-open-final-score-modal').addEventListener('click', () => requireAdminAuth(openFinalScoreModal));
-      document.getElementById('btn-archive-quick-score').addEventListener('click', () => requireAdminAuth(openFinalScoreModal));
-      document.getElementById('btn-close-final-score-modal').addEventListener('click', () => finalScoreModal.classList.add('hidden'));
-      document.getElementById('btn-cancel-final-score').addEventListener('click', () => finalScoreModal.classList.add('hidden'));
-
-      document.getElementById('btn-auto-fill-4th').addEventListener('click', () => {
-        const pCount = getPlayerCount();
-        const expectedSum = pCount * getStartingScore();
-        let sumOthers = 0;
-        for (let i = 0; i < pCount - 1; i++) {
-          sumOthers += Number(document.getElementById(`final-pscore-${i}`)?.value) || 0;
-        }
-        const lastInput = document.getElementById(`final-pscore-${pCount - 1}`);
-        if (lastInput) {
-          lastInput.value = expectedSum - sumOthers;
-          updateFinalScoreModalPreview();
-        }
-      });
-
-      document.getElementById('btn-save-final-to-archive-only').addEventListener('click', () => {
-        const pCount = getPlayerCount();
-        const customPlayers = [];
-        for (let i = 0; i < pCount; i++) {
-          const nameVal = document.getElementById(`final-pname-${i}`)?.value.trim() || state.players[i].name;
-          const scoreVal = Number(document.getElementById(`final-pscore-${i}`)?.value) || 0;
-          customPlayers.push({ id: i, name: nameVal, score: scoreVal });
-        }
-        const memoVal = document.getElementById('input-final-score-memo').value.trim() || `최종 점수 직입력 대국 (${new Date().toLocaleDateString()})`;
-        const standings = calculateMajsoulStandings(customPlayers);
-        if (!Array.isArray(state.archives)) state.archives = [];
-        state.archives.unshift({
-          id: 'arch_' + Date.now(),
-          dateStr: new Date().toLocaleString(),
-          memo: memoVal,
-          recordType: 'score_only',
-          gameMode: state.gameMode,
-          umaProfile: state.umaProfile,
-          standings,
-          history: [],
-          players: customPlayers
-        });
-        finalScoreModal.classList.add('hidden');
-        saveToStorage();
-        renderAll();
-        showToast('📁 최종 점수 대국이 아카이브와 플레이어 전적에 등록되었습니다!');
-      });
-
-      document.getElementById('btn-apply-final-and-finish').addEventListener('click', () => {
-        saveSnapshot();
-        const pCount = getPlayerCount();
-        for (let i = 0; i < pCount; i++) {
-          const nameVal = document.getElementById(`final-pname-${i}`)?.value.trim();
-          const scoreVal = Number(document.getElementById(`final-pscore-${i}`)?.value) || 0;
-          if (nameVal) state.players[i].name = nameVal;
-          state.players[i].score = scoreVal;
-        }
-        const memoVal = document.getElementById('input-final-score-memo').value.trim() || `최종 점수 마감 대국 (${new Date().toLocaleDateString()})`;
-        state.isGameOver = true;
-        archiveCurrentMatch(memoVal, state.history.length === 0 ? 'score_only' : 'detailed');
-        finalScoreModal.classList.add('hidden');
-        saveToStorage();
-        renderAll();
-        switchTab('stats');
-      });
-
-      const syncBoardModal = document.getElementById('modal-sync-board');
-      document.getElementById('btn-open-sync-board-modal').addEventListener('click', () => {
-        requireAdminAuth(() => {
-          const pCount = getPlayerCount();
-          document.getElementById('sync-round-wind').value = String(state.roundWind);
-          document.getElementById('sync-round-num').value = String(state.roundNum % pCount);
-          document.getElementById('sync-honba').value = state.honba;
-          document.getElementById('sync-riichi-pot').value = state.riichiPot;
-
-          const box = document.getElementById('sync-players-score-inputs');
-          box.innerHTML = state.players.slice(0, pCount).map((p, idx) => `
-            <div class="flex items-center justify-between gap-2">
-              <span class="text-xs font-bold text-slate-300">${p.name}</span>
-              <input type="number" id="sync-pscore-${idx}" step="100" value="${p.score}" class="w-32 bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs font-bold text-white text-right" />
-            </div>
-          `).join('');
-          syncBoardModal.classList.remove('hidden');
-        });
-      });
-      document.getElementById('btn-close-sync-board').addEventListener('click', () => syncBoardModal.classList.add('hidden'));
-      document.getElementById('btn-cancel-sync-board').addEventListener('click', () => syncBoardModal.classList.add('hidden'));
-      document.getElementById('btn-save-sync-board').addEventListener('click', () => {
-        saveSnapshot();
-        const pCount = getPlayerCount();
-        state.roundWind = Number(document.getElementById('sync-round-wind').value) || 0;
-        state.roundNum = Number(document.getElementById('sync-round-num').value) || 0;
-        state.honba = Math.max(0, Number(document.getElementById('sync-honba').value) || 0);
-        state.riichiPot = Math.max(0, Number(document.getElementById('sync-riichi-pot').value) || 0);
-        for (let i = 0; i < pCount; i++) {
-          state.players[i].score = Number(document.getElementById(`sync-pscore-${i}`)?.value) || 0;
-        }
-        syncBoardModal.classList.add('hidden');
-        saveToStorage();
-        renderAll();
-        showToast('🔧 현재 국 및 보유 점수가 보정되었습니다.');
-      });
-
-      document.querySelectorAll('.qscore-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const activeWid = state.activeConfigWinnerId ?? state.winnerIds[0];
-          ensureWinnerConfig(activeWid);
-          const cfg = state.winnerHandConfigs[activeWid];
-          cfg.isQuickScoreOnly = true;
-          cfg.quickScoreValue = Number(btn.getAttribute('data-qscore')) || 8000;
-          cfg.quickTierLabel = btn.getAttribute('data-qtier') || '점수 빠른 기록';
-          document.getElementById('input-quick-custom-score').value = cfg.quickScoreValue;
-          renderRecorderForm();
-        });
-      });
-      document.getElementById('input-quick-custom-score').addEventListener('input', (e) => {
-        const activeWid = state.activeConfigWinnerId ?? state.winnerIds[0];
-        ensureWinnerConfig(activeWid);
-        const cfg = state.winnerHandConfigs[activeWid];
-        cfg.quickScoreValue = Number(e.target.value) || 1000;
-        cfg.quickTierLabel = `점수 직접 기록 (${cfg.quickScoreValue.toLocaleString()}점)`;
-        renderRecorderForm();
-      });
-
-      const searchInputEl = document.getElementById('input-yaku-search');
-      if (searchInputEl) {
-        searchInputEl.value = state.yakuSearchQuery || '';
-        searchInputEl.addEventListener('input', (e) => {
-          state.yakuSearchQuery = e.target.value;
-          renderRecorderForm();
-        });
-        searchInputEl.addEventListener('keydown', (e) => {
-          if (e.key === 'Enter') {
-            e.preventDefault();
-            const q = searchInputEl.value.trim().toLowerCase();
-            const activeWid = state.activeConfigWinnerId ?? state.winnerIds[0];
-            ensureWinnerConfig(activeWid);
-            const activeConfig = state.winnerHandConfigs[activeWid];
-
-            if (q.includes('동') || q.includes('남') || q.includes('서') || q.includes('북')) {
-              ['yakuhai_jikaze', 'yakuhai_bakaze'].forEach(id => {
-                if (!activeConfig.selectedYaku.includes(id)) {
-                  activeConfig.selectedYaku.push(id);
-                }
-              });
-              showToast('자풍패 및 장풍패(연풍패)가 동시에 선택되었습니다!');
-              state.yakuSearchQuery = '';
-              searchInputEl.value = '';
-              renderRecorderForm();
-            } else {
-              const filtered = YAKU_LIST.filter(y => {
-                if (activeConfig.isFuro && y.isMenzenOnly) return false;
-                const nameMatch = y.name.toLowerCase().includes(q);
-                const kwMatch = y.keywords && y.keywords.some(kw => kw.toLowerCase().includes(q));
-                return nameMatch || kwMatch;
-              });
-              if (filtered.length > 0) {
-                const targetId = filtered[0].id;
-                if (!activeConfig.selectedYaku.includes(targetId)) {
-                  activeConfig.selectedYaku.push(targetId);
-                  showToast(filtered[0].name + ' 역이 선택되었습니다.');
-                }
-                state.yakuSearchQuery = '';
-                searchInputEl.value = '';
-                renderRecorderForm();
-              }
-            }
-          }
-        });
-      }
-
-      document.querySelectorAll('.outcome-type-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          state.outcomeType = btn.getAttribute('data-outcome');
-          if (state.outcomeType === 'tsumo') {
-            state.winnerIds = [state.winnerIds[0] ?? 0];
-            state.activeConfigWinnerId = state.winnerIds[0];
-            ensureWinnerConfig(state.activeConfigWinnerId);
-            if (!state.winnerHandConfigs[state.activeConfigWinnerId].selectedYaku.includes('tsumo')) {
-              state.winnerHandConfigs[state.activeConfigWinnerId].selectedYaku.push('tsumo');
-            }
-          } else if (state.outcomeType === 'ron') {
-            const wid = state.activeConfigWinnerId ?? state.winnerIds[0];
-            ensureWinnerConfig(wid);
-            state.winnerHandConfigs[wid].selectedYaku = state.winnerHandConfigs[wid].selectedYaku.filter(id => id !== 'tsumo');
-          }
-          renderRecorderForm();
-        });
-      });
-
-      document.getElementById('btn-clear-yaku').addEventListener('click', () => {
-        const activeWid = state.activeConfigWinnerId ?? state.winnerIds[0];
-        ensureWinnerConfig(activeWid);
-        state.winnerHandConfigs[activeWid].selectedYaku = [];
-        renderRecorderForm();
-      });
-
-      document.querySelectorAll('.ycat-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          state.yakuCategoryFilter = btn.getAttribute('data-ycat');
-          renderRecorderForm();
-        });
-      });
-
-      document.querySelectorAll('.dora-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const key = btn.getAttribute('data-dora');
-          const delta = Number(btn.getAttribute('data-delta'));
-          const activeWid = state.activeConfigWinnerId ?? state.winnerIds[0];
-          ensureWinnerConfig(activeWid);
-          const cfg = state.winnerHandConfigs[activeWid];
-          cfg[key] = Math.max(0, Math.min(13, (cfg[key] || 0) + delta));
-          renderRecorderForm();
-        });
-      });
-
-      document.getElementById('select-fu').addEventListener('change', (e) => {
-        const activeWid = state.activeConfigWinnerId ?? state.winnerIds[0];
-        ensureWinnerConfig(activeWid);
-        state.winnerHandConfigs[activeWid].fu = Number(e.target.value);
-        renderRecorderForm();
-      });
-
-      document.getElementById('chk-manual-score').addEventListener('change', (e) => {
-        const activeWid = state.activeConfigWinnerId ?? state.winnerIds[0];
-        ensureWinnerConfig(activeWid);
-        state.winnerHandConfigs[activeWid].manualScoreEnabled = e.target.checked;
-        document.getElementById('manual-score-box').classList.toggle('hidden', !e.target.checked);
-        renderRecorderForm();
-      });
-      document.getElementById('input-manual-score').addEventListener('input', (e) => {
-        const activeWid = state.activeConfigWinnerId ?? state.winnerIds[0];
-        ensureWinnerConfig(activeWid);
-        state.winnerHandConfigs[activeWid].manualScoreValue = Number(e.target.value);
-        renderRecorderForm();
-      });
-
-      // Protected Submit Win & Draw
-      document.getElementById('btn-submit-win').addEventListener('click', () => requireAdminAuth(handleWinSubmit));
-      document.getElementById('btn-submit-draw').addEventListener('click', () => requireAdminAuth(handleDrawSubmit));
-
-      document.getElementById('filter-history-player').addEventListener('change', renderFeedsAndHistory);
-      document.getElementById('filter-history-type').addEventListener('change', renderFeedsAndHistory);
-
-      document.getElementById('btn-undo-last').addEventListener('click', () => {
-        requireDeleteAuth(() => {
-          if (state.snapshots.length === 0) return;
-          const prev = state.snapshots.pop();
-          state.players = prev.players;
-          state.roundWind = prev.roundWind;
-          state.roundNum = prev.roundNum;
-          state.honba = prev.honba;
-          state.riichiPot = prev.riichiPot;
-          state.isGameOver = prev.isGameOver;
-          state.history = prev.history;
-          saveToSupabase();
-          renderAll();
-          showToast('↩ 직전 기록이 취소되었습니다.');
-        });
-      });
-      document.getElementById('btn-load-demo').addEventListener('click', () => requireAdminAuth(loadSampleMatch));
-      document.getElementById('btn-reset-match').addEventListener('click', () => requireDeleteAuth(resetNewMatch));
-
-      const modal = document.getElementById('modal-settings');
-      const openSettings = () => {
-        requireAdminAuth(() => {
-          document.getElementById('setting-game-mode').value = state.gameMode;
-          document.getElementById('setting-uma-profile').value = state.umaProfile || 'majsoul_standard';
-          document.getElementById('setting-kiriage').value = String(state.kiriageMangan !== false);
-          state.players.forEach((p, idx) => {
-            document.getElementById(`input-pname-${idx}`).value = p.name;
-          });
-          document.getElementById('setting-p3-box').classList.toggle('hidden', state.gameMode.startsWith('3p'));
-          modal.classList.remove('hidden');
-        });
-      };
-      document.getElementById('btn-open-settings').addEventListener('click', openSettings);
-      document.getElementById('btn-close-settings').addEventListener('click', () => modal.classList.add('hidden'));
-      document.getElementById('btn-cancel-settings').addEventListener('click', () => modal.classList.add('hidden'));
-      document.getElementById('setting-game-mode').addEventListener('change', (e) => {
-        document.getElementById('setting-p3-box').classList.toggle('hidden', e.target.value.startsWith('3p'));
-      });
-     document.getElementById('btn-save-settings').addEventListener('click', () => {
-        const newMode = document.getElementById('setting-game-mode').value;
-        const newUma = document.getElementById('setting-uma-profile').value;
-        // 👇 이 부분을 수정하여 셀렉트박스 값을 올바르게 가져오도록 합니다.
-        const newKiriage = document.getElementById('setting-kiriage').value === 'true';
-        
-        const modeChanged = newMode !== state.gameMode;
-        state.gameMode = newMode;
-        state.umaProfile = newUma;
-        state.kiriageMangan = newKiriage; // 올바르게 정의된 변수 대입
-        
-        for (let i = 0; i < 4; i++) {
-          const val = document.getElementById(`input-pname-${i}`).value.trim();
-          if (val) state.players[i].name = val;
-        }
-        if (modeChanged) {
-          resetNewMatch();
-        } else {
-          saveToSupabase();
-          renderAll();
-        }
-        modal.classList.add('hidden');
-        showToast('⚙️ 작혼 룰 설정이 적용되었습니다.');
-      });
-      const btnExportHeader = document.getElementById('btn-export-image');
-      if (btnExportHeader) {
-        btnExportHeader.addEventListener('click', () => {
-          if (typeof window.openImageExportModal === 'function') {
-            window.openImageExportModal();
-          }
-        });
-      }
-      document.getElementById('btn-export-summary').addEventListener('click', () => {
-        const standings = calculateMajsoulStandings();
-        let lines = [`[작로그 작혼식 대국 요약 - 총 ${state.history.length}국 진행]`];
-        standings.forEach(st => {
-          lines.push(`${st.rank}위: ${st.name} (${st.score.toLocaleString()}점) | 최종 Pt: ${st.finalPt >= 0 ? '+' : ''}${st.finalPt} pt (우마 ${st.uma})`);
-        });
-        lines.push('\n[주요 화료 내역]');
-        state.history.forEach(h => {
-          if (h.outcome === 'draw') {
-            lines.push(`- ${h.roundLabel} ${h.honba}본장: 유국`);
-          } else {
-            const wDesc = (h.winnerHands || []).map(wh => `${state.players[wh.winnerId]?.name}(${wh.isFuro ? '후로' : '멘젠'}, ${wh.tierName})`).join(' & ');
-            const how = h.outcome === 'ron' ? `${state.players[h.loserId]?.name}에게 론` : '쯔모';
-            lines.push(`- ${h.roundLabel} ${h.honba}본장: ${wDesc} (${how})`);
-          }
-        });
-        const text = lines.join('\n');
-        const ta = document.createElement('textarea');
-        ta.value = text;
-        document.body.appendChild(ta);
-        ta.select();
-        try {
-          document.execCommand('copy');
-          showToast('📋 최종 정산 및 요약이 클립보드에 복사되었습니다!');
-        } catch (err) {
-          showToast('복사에 실패했습니다.');
-        }
-        document.body.removeChild(ta);
-      });
-      const imageTitleModal = document.getElementById('modal-image-title');
-    const btnExportImage = document.getElementById('btn-export-image');
-
-    if (btnExportImage) {
-      // 기존에 동작하던 단순 캡처 함수 대신 모달을 띄우도록 수정
-      btnExportImage.removeEventListener('click', exportMatchSummaryImage);
-      btnExportImage.addEventListener('click', () => {
-        const defaultTitle = `작로그_대국결과_${new Date().toISOString().slice(0, 10)}`;
-        document.getElementById('input-image-title').value = defaultTitle;
-        imageTitleModal.classList.remove('hidden');
-        setTimeout(() => document.getElementById('input-image-title').select(), 50);
+    // 상단 헤더 버튼 이벤트 연결
+    const btnExportHeader = document.getElementById('btn-export-image');
+    if (btnExportHeader) {
+      btnExportHeader.addEventListener('click', () => {
+        window.openImageExportModal();
       });
     }
 
+    // 모달 닫기/취소 이벤트 연결
     const btnCloseImageTitle = document.getElementById('btn-close-image-title');
     if (btnCloseImageTitle) {
       btnCloseImageTitle.addEventListener('click', () => imageTitleModal.classList.add('hidden'));
@@ -4920,15 +4272,17 @@
       btnCancelImageTitle.addEventListener('click', () => imageTitleModal.classList.add('hidden'));
     }
 
+    // 모달 확인(다운로드) 이벤트 연결
     const btnConfirmImageTitle = document.getElementById('btn-confirm-image-title');
     if (btnConfirmImageTitle) {
       btnConfirmImageTitle.addEventListener('click', () => {
         const titleVal = document.getElementById('input-image-title').value.trim();
         imageTitleModal.classList.add('hidden');
-        exportMatchSummaryImage(titleVal); // 입력된 제목을 전달하여 이미지 저장
+        exportMatchSummaryImage(titleVal);
       });
     }
-    });
+
+  });
   </script>
 </body>
 </html>
