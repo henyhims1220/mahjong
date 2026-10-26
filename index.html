@@ -1195,6 +1195,7 @@
       honba: 0,
       riichiPot: 0,
       isGameOver: false,
+      isArchived: false, // 👈 중복 저장 방지 플래그 추가
       history: [],
       snapshots: [],
       archives: [],
@@ -1988,7 +1989,8 @@
     }
 
     function resetNewMatch() {
-      if (state.history.length > 0) {
+// 👇 이미 저장된(isArchived) 대국이면 자동 백업 안 함 👇
+      if (state.history.length > 0 && !state.isArchived) { 
         archiveCurrentMatch('자동 백업 (새 대국 초기화 시점)');
       }
 
@@ -1999,6 +2001,7 @@
       state.honba = 0;
       state.riichiPot = 0;
       state.isGameOver = false;
+      state.isArchived = false; // 👈 새 대국이므로 플래그 초기화
       state.history = [];
       state.snapshots = [];
       state.winnerIds = [0];
@@ -2042,6 +2045,7 @@
         players: JSON.parse(JSON.stringify(state.players))
       };
       state.archives.unshift(archiveItem);
+      state.isArchived = true; // 👈 수동/자동으로 한 번 저장되었음을 기록
       saveToStorage();
       renderAll();
       showToast('💾 대국이 아카이브 탭에 영구 저장되었습니다!');
@@ -3870,8 +3874,13 @@
       const hasTobi = state.players.slice(0, pCount).some(p => p.score < 0);
       if (hasTobi && state.tobiRule !== false) {
         state.isGameOver = true;
-        archiveCurrentMatch('자동 백업 (토비 종국)');
-        showToast('💥 토비 발생! 대국이 즉시 종료되고 아카이브에 백업되었습니다.');
+        saveToSupabase();
+        renderAll(); // 게임 종료 상태를 화면에 먼저 반영
+        
+        // 👇 바로 저장하지 않고, 이름 설정 모달 띄우기 👇
+        showToast('💥 토비 발생! 대국이 종료되었습니다. 저장할 대국 이름을 설정해 주세요.');
+        document.getElementById('input-archive-save-memo').value = `토비 종국 대국 (${new Date().toLocaleDateString()})`;
+        document.getElementById('modal-archive-save').classList.remove('hidden');
         return;
       }
 
