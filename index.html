@@ -4006,16 +4006,14 @@
         `;
       }).join('');
 
-// (2) 하단 상세 데이터 테이블 HTML 구성 (마커 밀림 현상 최종 해결)
+// (2) 하단 상세 데이터 테이블 HTML 구성 (마커 밀림 현상 완전 해결)
       const playerStats = computeSingleMatchPlayerStats(activePlayers, state.history);
       const statsRowsHtml = playerStats.map(ps => {
         return `
           <div style="display: flex; align-items: center; border-bottom: 1px solid #1e293b; height: 50px; padding: 0 16px; box-sizing: border-box;">
-            <div style="flex: 1.2; text-align: left; display: flex; align-items: center;">
-              <span style="display: inline-flex; align-items: center; gap: 8px;">
-                <span style="width: 9px; height: 9px; background-color: ${ps.color}; border-radius: 50%; display: inline-block;"></span>
-                <span style="font-weight: 800; color: #ffffff; font-size: 13px; display: inline-block; transform: translateY(-0.5px);">${ps.name}</span>
-              </span>
+            <div style="flex: 1.2; text-align: left; display: flex; align-items: center; gap: 8px; line-height: normal;">
+              <div style="width: 9px; height: 9px; min-width: 9px; min-height: 9px; background-color: ${ps.color}; border-radius: 50%; display: inline-block;"></div>
+              <span style="font-weight: 800; color: #ffffff; font-size: 13px; display: inline-block; line-height: 1;">${ps.name}</span>
             </div>
             <div style="flex: 1.5; text-align: center; line-height: 1.2;">
               <span style="color: #10b981; font-weight: 800; font-size: 12px;">${ps.wins}회</span>
