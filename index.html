@@ -4006,37 +4006,35 @@
         `;
       }).join('');
 
-  // (2) 하단 상세 데이터 테이블 HTML 구성 (주력 화료 역 열 제거 버전)
+// (2) 하단 상세 데이터 테이블 HTML 구성 (div Flex 구조로 변경하여 텍스트 밀림 방지)
       const playerStats = computeSingleMatchPlayerStats(activePlayers, state.history);
       const statsRowsHtml = playerStats.map(ps => {
         return `
-          <tr style="border-bottom: 1px solid #1e293b;">
-            <td style="padding: 14px; font-weight: 800; color: #ffffff; font-size: 13px; text-align: left;">
-              <div style="display: flex; align-items: center; gap: 8px;">
-                <span style="width: 9px; height: 9px; border-radius: 50%; background: ${ps.color}; display: inline-block; flex-shrink: 0;"></span>
-                <span>${ps.name}</span>
-              </div>
-            </td>
-            <td style="padding: 14px 8px; text-align: center;">
+          <div style="display: flex; align-items: center; border-bottom: 1px solid #1e293b; height: 50px; padding: 0 16px; box-sizing: border-box;">
+            <div style="flex: 1.2; font-weight: 800; color: #ffffff; font-size: 13px; text-align: left; display: flex; align-items: center; gap: 8px;">
+              <span style="width: 9px; height: 9px; border-radius: 50%; background: ${ps.color}; display: inline-block; flex-shrink: 0;"></span>
+              <span style="line-height: 1;">${ps.name}</span>
+            </div>
+            <div style="flex: 1.5; text-align: center; line-height: 1;">
               <span style="color: #10b981; font-weight: 800; font-size: 12px;">${ps.wins}회</span>
-              <span style="color: #94a3b8; font-size: 11px;"> (론${ps.rons}/쯔모${ps.tsumos}, ${ps.winRate}%)</span>
-            </td>
-            <td style="padding: 14px 8px; text-align: center;">
+              <span style="color: #94a3b8; font-size: 10px;"> (론${ps.rons}/쯔모${ps.tsumos}, ${ps.winRate}%)</span>
+            </div>
+            <div style="flex: 1.6; text-align: center; line-height: 1;">
               <span style="color: #f59e0b; font-weight: 800; font-size: 12px;">${ps.avgWinScore > 0 ? ps.avgWinScore.toLocaleString() + '점' : '-'}</span>
-              <span style="color: #94a3b8; font-size: 11px;">${ps.maxWinScore > 0 ? ` (최고 +${ps.maxWinScore.toLocaleString()})` : ''}</span>
-            </td>
-            <td style="padding: 14px 8px; text-align: center;">
+              <span style="color: #94a3b8; font-size: 10px;">${ps.maxWinScore > 0 ? ` (최고 +${ps.maxWinScore.toLocaleString()})` : ''}</span>
+            </div>
+            <div style="flex: 1.1; text-align: center; line-height: 1;">
               <span style="color: #f43f5e; font-weight: 800; font-size: 12px;">${ps.riichiCount}회</span>
-              <span style="color: #94a3b8; font-size: 11px;"> (${ps.riichiRate}%)</span>
-            </td>
-            <td style="padding: 14px 8px; text-align: center;">
+              <span style="color: #94a3b8; font-size: 10px;"> (${ps.riichiRate}%)</span>
+            </div>
+            <div style="flex: 1.1; text-align: center; line-height: 1;">
               <span style="color: #fb7185; font-weight: 800; font-size: 12px;">${ps.dealIns}회</span>
-              <span style="color: #94a3b8; font-size: 11px;"> (${ps.dealInRate}%)</span>
-            </td>
-            <td style="padding: 14px; text-align: right; color: #fb7185; font-weight: 800; font-size: 12px;">
+              <span style="color: #94a3b8; font-size: 10px;"> (${ps.dealInRate}%)</span>
+            </div>
+            <div style="flex: 1.1; text-align: right; color: #fb7185; font-weight: 800; font-size: 12px; line-height: 1;">
               ${ps.avgDealInScore > 0 ? '-' + ps.avgDealInScore.toLocaleString() + '점' : '-'}
-            </td>
-          </tr>
+            </div>
+          </div>
         `;
       }).join('');
         
