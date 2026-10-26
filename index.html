@@ -3989,18 +3989,18 @@
         const ptColor = st.finalPt >= 0 ? '#10b981' : '#f43f5e';
 
         return `
-          <div style="flex: 1; min-width: 0; background: #0f172a; border-radius: 14px; padding: 14px 16px; ${cardBorder} display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box;">
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
-              <span style="${rankBadgeStyle} font-size: 11px; font-weight: 800; padding: 3px 8px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; line-height: 1;">${st.rank}위</span>
-              <span style="font-size: 15px; font-weight: 800; color: #ffffff; letter-spacing: -0.5px; display: inline-flex; align-items: center; line-height: 1;">${st.name}</span>
+          <div style="flex: 1 1 0; min-width: 0; height: 116px; background: #0f172a; border-radius: 14px; padding: 14px 16px; ${cardBorder} display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box;">
+            <div style="height: 32px; flex: 0 0 32px; position: relative; display: flex; align-items: center; justify-content: space-between; margin: 0; padding: 0; box-sizing: border-box;">
+              <span style="${rankBadgeStyle} height: 30px; box-sizing: border-box; font-size: 11px; font-weight: 800; padding: 0 8px; border-radius: 6px; display: flex; align-items: center; justify-content: center; line-height: 1; margin: 0; vertical-align: middle;">${st.rank}위</span>
+              <span style="height: 32px; box-sizing: border-box; font-size: 15px; font-weight: 800; color: #ffffff; letter-spacing: -0.5px; display: flex; align-items: center; justify-content: flex-end; line-height: 1; margin: 0; padding: 0; vertical-align: middle;">${st.name}</span>
             </div>
-            <div style="font-size: 12px; color: #94a3b8; display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; line-height: 1;">
-              <span>최종 점수</span>
-              <strong style="color: #ffffff; font-size: 13px; font-weight: 700; display: inline-flex; align-items: center; line-height: 1;">${st.score.toLocaleString()}점</strong>
+            <div style="height: 22px; flex: 0 0 22px; box-sizing: border-box; font-size: 12px; color: #94a3b8; display: flex; justify-content: space-between; align-items: center; margin: 0; line-height: 22px;">
+              <span style="display: inline-flex; align-items: center; height: 22px; line-height: 22px;">최종 점수</span>
+              <strong style="color: #ffffff; font-size: 13px; font-weight: 700; display: inline-flex; align-items: center; height: 22px; line-height: 22px;">${st.score.toLocaleString()}점</strong>
             </div>
-            <div style="font-size: 12px; color: #94a3b8; display: flex; justify-content: space-between; align-items: center; line-height: 1;">
-              <span>최종 승점</span>
-              <strong style="color: ${ptColor}; font-size: 13px; font-weight: 700; display: inline-flex; align-items: center; line-height: 1;">${st.finalPt >= 0 ? '+' : ''}${st.finalPt} pt</strong>
+            <div style="height: 22px; flex: 0 0 22px; box-sizing: border-box; font-size: 12px; color: #94a3b8; display: flex; justify-content: space-between; align-items: center; margin: 0; line-height: 22px;">
+              <span style="display: inline-flex; align-items: center; height: 22px; line-height: 22px;">최종 승점</span>
+              <strong style="color: ${ptColor}; font-size: 13px; font-weight: 700; display: inline-flex; align-items: center; height: 22px; line-height: 22px;">${st.finalPt >= 0 ? '+' : ''}${st.finalPt} pt</strong>
             </div>
           </div>
         `;
@@ -4155,7 +4155,8 @@
         }
       });
 
-      await new Promise(resolve => setTimeout(resolve, 80));
+      if (document.fonts && document.fonts.ready) await document.fonts.ready;
+      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
 
       // 3. html2canvas로 캡처 및 다운로드
       try {
