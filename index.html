@@ -3276,6 +3276,89 @@
         };
       });
 
+      // 💡 현재 메인 대국 탭(board)에 있을 때만 실시간 그래프 캔버스를 렌더링
+      const liveCanvas = document.getElementById('chart-score-trend-live');
+      if (liveCanvas && state.activeTab === 'board') {
+        if (liveTrendChartInstance) liveTrendChartInstance.destroy();
+        liveTrendChartInstance = new Chart(liveCanvas.getContext('2d'), {
+          type: 'line',
+          data: { labels, datasets },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { labels: { color: '#cbd5e1', font: { size: 11 } } }
+            },
+            scales: {
+              x: { ticks: { color: '#94a3b8', font: { size: 10 } }, grid: { color: '#1e293b' } },
+              y: { ticks: { color: '#94a3b8', font: { size: 10 } }, grid: { color: '#1e293b' } }
+            }
+          }
+        });
+      }
+
+      // 역 분석 & 최종 정산 탭(stats)의 그래프
+      const trendCanvas = document.getElementById('chart-score-trend');
+      if (trendCanvas && state.activeTab === 'stats') {
+        if (scoreChartInstance) scoreChartInstance.destroy();
+        scoreChartInstance = new Chart(trendCanvas.getContext('2d'), {
+          type: 'line',
+          data: { labels, datasets },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { labels: { color: '#cbd5e1', font: { size: 11 } } }
+            },
+            scales: {
+              x: { ticks: { color: '#94a3b8', font: { size: 10 } }, grid: { color: '#1e293b' } },
+              y: { ticks: { color: '#94a3b8', font: { size: 10 } }, grid: { color: '#1e293b' } }
+            }
+          }
+        });
+
+        const globalYakuMap = {};
+        state.history.forEach(h => {
+          (h.winnerHands || []).forEach(wh => {
+            (wh.yakuNames || []).forEach(yn => {
+              if (!yn.includes('역 미기재')) {
+                globalYakuMap[yn] = (globalYakuMap[yn] || 0) + 1;
+              }
+            });
+          });
+        });
+        const sortedYaku = Object.entries(globalYakuMap).sort((a, b) => b[1] - a[1]).slice(0, 8);
+
+        const ctxYaku = document.getElementById('chart-yaku-freq').getContext('2d');
+        if (yakuChartInstance) yakuChartInstance.destroy();
+        yakuChartInstance = new Chart(ctxYaku, {
+          type: 'bar',
+          data: {
+            labels: sortedYaku.length ? sortedYaku.map(e => e[0]) : ['기록 없음'],
+            datasets: [{
+              label: '출현 횟수(회)',
+              data: sortedYaku.length ? sortedYaku.map(e => e[1]) : [0],
+              backgroundColor: '#10b981',
+              borderRadius: 6
+            }]
+          },
+          options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false }
+            },
+            scales: {
+              x: { beginAtZero: true, ticks: { stepSize: 1, color: '#94a3b8' }, grid: { color: '#1e293b' } },
+              y: { ticks: { color: '#e2e8f0', font: { size: 11 } }, grid: { display: false } }
+            }
+          }
+        });
+      }
+    }
+
+
       const ctxLive = document.getElementById('chart-score-trend-live').getContext('2d');
       if (liveTrendChartInstance) liveTrendChartInstance.destroy();
       liveTrendChartInstance = new Chart(ctxLive, {
