@@ -14,7 +14,45 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     body {
-      font-family: 'Noto Sans KR', 'Inter', sans-serif;
+      font-family: 'Noto Sans KR', 'Inter', sans-serif;// (2) 하단 상세 데이터 테이블 HTML 구성 (테이블 셀 완벽 수직 중앙 정렬)
+      const playerStats = computeSingleMatchPlayerStats(activePlayers, state.history);
+      const statsRowsHtml = playerStats.map(ps => {
+        return `
+          <tr style="border-bottom: 1px solid #1e293b; height: 50px;">
+            <td style="padding: 0 14px; font-weight: 800; color: #ffffff; font-size: 13px; vertical-align: middle; text-align: left;">
+              <table style="border-collapse: collapse; width: auto; background: transparent;">
+                <tr>
+                  <td style="padding: 0; vertical-align: middle; padding-right: 8px;">
+                    <span style="width: 9px; height: 9px; border-radius: 50%; background: ${ps.color}; display: inline-block;"></span>
+                  </td>
+                  <td style="padding: 0; vertical-align: middle;">
+                    <span>${ps.name}</span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+            <td style="padding: 0 8px; text-align: center; vertical-align: middle;">
+              <span style="color: #10b981; font-weight: 800; font-size: 12px;">${ps.wins}회</span>
+              <span style="color: #94a3b8; font-size: 11px;"> (론${ps.rons}/쯔모${ps.tsumos}, ${ps.winRate}%)</span>
+            </td>
+            <td style="padding: 0 8px; text-align: center; vertical-align: middle;">
+              <span style="color: #f59e0b; font-weight: 800; font-size: 12px;">${ps.avgWinScore > 0 ? ps.avgWinScore.toLocaleString() + '점' : '-'}</span>
+              <span style="color: #94a3b8; font-size: 11px;">${ps.maxWinScore > 0 ? ` (최고 +${ps.maxWinScore.toLocaleString()})` : ''}</span>
+            </td>
+            <td style="padding: 0 8px; text-align: center; vertical-align: middle;">
+              <span style="color: #f43f5e; font-weight: 800; font-size: 12px;">${ps.riichiCount}회</span>
+              <span style="color: #94a3b8; font-size: 11px;"> (${ps.riichiRate}%)</span>
+            </td>
+            <td style="padding: 0 8px; text-align: center; vertical-align: middle;">
+              <span style="color: #fb7185; font-weight: 800; font-size: 12px;">${ps.dealIns}회</span>
+              <span style="color: #94a3b8; font-size: 11px;"> (${ps.dealInRate}%)</span>
+            </td>
+            <td style="padding: 0 14px; text-align: right; vertical-align: middle; color: #fb7185; font-weight: 800; font-size: 12px;">
+              ${ps.avgDealInScore > 0 ? '-' + ps.avgDealInScore.toLocaleString() + '점' : '-'}
+            </td>
+          </tr>
+        `;
+      }).join('');
       background-color: #0b131e;
       color: #f1f5f9;
     }
@@ -3238,90 +3276,6 @@
         };
       });
 
-      // 💡 현재 메인 대국 탭(board)에 있을 때만 실시간 그래프 캔버스를 렌더링
-      const liveCanvas = document.getElementById('chart-score-trend-live');
-      if (liveCanvas && state.activeTab === 'board') {
-        if (liveTrendChartInstance) liveTrendChartInstance.destroy();
-        liveTrendChartInstance = new Chart(liveCanvas.getContext('2d'), {
-          type: 'line',
-          data: { labels, datasets },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-              legend: { labels: { color: '#cbd5e1', font: { size: 11 } } }
-            },
-            scales: {
-              x: { ticks: { color: '#94a3b8', font: { size: 10 } }, grid: { color: '#1e293b' } },
-              y: { ticks: { color: '#94a3b8', font: { size: 10 } }, grid: { color: '#1e293b' } }
-            }
-          }
-        });
-      }
-
-      // 역 분석 & 최종 정산 탭(stats)의 그래프
-      const trendCanvas = document.getElementById('chart-score-trend');
-      if (trendCanvas && state.activeTab === 'stats') {
-        if (scoreChartInstance) scoreChartInstance.destroy();
-        scoreChartInstance = new Chart(trendCanvas.getContext('2d'), {
-          type: 'line',
-          data: { labels, datasets },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-              legend: { labels: { color: '#cbd5e1', font: { size: 11 } } }
-            },
-            scales: {
-              x: { ticks: { color: '#94a3b8', font: { size: 10 } }, grid: { color: '#1e293b' } },
-              y: { ticks: { color: '#94a3b8', font: { size: 10 } }, grid: { color: '#1e293b' } }
-            }
-          }
-        });
-
-        const globalYakuMap = {};
-        state.history.forEach(h => {
-          (h.winnerHands || []).forEach(wh => {
-            (wh.yakuNames || []).forEach(yn => {
-              if (!yn.includes('역 미기재')) {
-                globalYakuMap[yn] = (globalYakuMap[yn] || 0) + 1;
-              }
-            });
-          });
-        });
-        const sortedYaku = Object.entries(globalYakuMap).sort((a, b) => b[1] - a[1]).slice(0, 8);
-
-        const ctxYaku = document.getElementById('chart-yaku-freq').getContext('2d');
-        if (yakuChartInstance) yakuChartInstance.destroy();
-        yakuChartInstance = new Chart(ctxYaku, {
-          type: 'bar',
-          data: {
-            labels: sortedYaku.length ? sortedYaku.map(e => e[0]) : ['기록 없음'],
-            datasets: [{
-              label: '출현 횟수(회)',
-              data: sortedYaku.length ? sortedYaku.map(e => e[1]) : [0],
-              backgroundColor: '#10b981',
-              borderRadius: 6
-            }]
-          },
-          options: {
-            indexAxis: 'y',
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-              legend: { display: false }
-            },
-            scales: {
-              x: { beginAtZero: true, ticks: { stepSize: 1, color: '#94a3b8' }, grid: { color: '#1e293b' } },
-              y: { ticks: { color: '#e2e8f0', font: { size: 11 } }, grid: { display: false } }
-            }
-          }
-        });
-      }
-    }
-
-
-
       const ctxLive = document.getElementById('chart-score-trend-live').getContext('2d');
       if (liveTrendChartInstance) liveTrendChartInstance.destroy();
       liveTrendChartInstance = new Chart(ctxLive, {
@@ -4081,40 +4035,39 @@
         `;
       }).join('');
 
-       // (2) 하단 상세 데이터 테이블 HTML 구성 (수직 중앙 정렬 및 쏠림 방지)
+  // (2) 하단 상세 데이터 테이블 HTML 구성 (패딩 기반 수직 정렬)
       const playerStats = computeSingleMatchPlayerStats(activePlayers, state.history);
       const statsRowsHtml = playerStats.map(ps => {
         return `
-          <tr style="border-bottom: 1px solid #1e293b; height: 50px;">
-            <td style="padding: 0 14px; font-weight: 800; color: #ffffff; font-size: 13px; text-align: left; vertical-align: middle;">
+          <tr style="border-bottom: 1px solid #1e293b;">
+            <td style="padding: 14px; font-weight: 800; color: #ffffff; font-size: 13px; text-align: left;">
               <div style="display: flex; align-items: center; gap: 8px;">
                 <span style="width: 9px; height: 9px; border-radius: 50%; background: ${ps.color}; display: inline-block; flex-shrink: 0;"></span>
                 <span>${ps.name}</span>
               </div>
             </td>
-            <td style="padding: 0 8px; text-align: center; vertical-align: middle;">
+            <td style="padding: 14px 8px; text-align: center;">
               <span style="color: #10b981; font-weight: 800; font-size: 12px;">${ps.wins}회</span>
               <span style="color: #94a3b8; font-size: 11px;"> (론${ps.rons}/쯔모${ps.tsumos}, ${ps.winRate}%)</span>
             </td>
-            <td style="padding: 0 8px; text-align: center; vertical-align: middle;">
+            <td style="padding: 14px 8px; text-align: center;">
               <span style="color: #f59e0b; font-weight: 800; font-size: 12px;">${ps.avgWinScore > 0 ? ps.avgWinScore.toLocaleString() + '점' : '-'}</span>
               <span style="color: #94a3b8; font-size: 11px;">${ps.maxWinScore > 0 ? ` (최고 +${ps.maxWinScore.toLocaleString()})` : ''}</span>
             </td>
-            <td style="padding: 0 8px; text-align: center; vertical-align: middle;">
+            <td style="padding: 14px 8px; text-align: center;">
               <span style="color: #f43f5e; font-weight: 800; font-size: 12px;">${ps.riichiCount}회</span>
               <span style="color: #94a3b8; font-size: 11px;"> (${ps.riichiRate}%)</span>
             </td>
-            <td style="padding: 0 8px; text-align: center; vertical-align: middle;">
+            <td style="padding: 14px 8px; text-align: center;">
               <span style="color: #fb7185; font-weight: 800; font-size: 12px;">${ps.dealIns}회</span>
               <span style="color: #94a3b8; font-size: 11px;"> (${ps.dealInRate}%)</span>
             </td>
-            <td style="padding: 0 14px; text-align: right; vertical-align: middle; color: #fb7185; font-weight: 800; font-size: 12px;">
+            <td style="padding: 14px; text-align: right; color: #fb7185; font-weight: 800; font-size: 12px;">
               ${ps.avgDealInScore > 0 ? '-' + ps.avgDealInScore.toLocaleString() + '점' : '-'}
             </td>
           </tr>
         `;
       }).join('');
-
         
      // 전체 레이아웃 조립 (표 대신 Flexbox 구조를 사용하여 수직 정렬 완벽 고정)
       wrapper.innerHTML = `
