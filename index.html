@@ -4006,7 +4006,7 @@
         `;
       }).join('');
 
-  // (2) 하단 상세 데이터 테이블 HTML 구성 (패딩 기반 수직 정렬)
+  // (2) 하단 상세 데이터 테이블 HTML 구성 (주력 화료 역 열 제거 버전)
       const playerStats = computeSingleMatchPlayerStats(activePlayers, state.history);
       const statsRowsHtml = playerStats.map(ps => {
         return `
@@ -4040,9 +4040,8 @@
         `;
       }).join('');
         
-     // 전체 레이아웃 조립 (표 대신 Flexbox 구조를 사용하여 수직 정렬 완벽 고정)
+      // 전체 레이아웃 조립 (테이블 헤더에서 '주력 화료 역' 항목 제거)
       wrapper.innerHTML = `
-        <!-- 이미지 상단에 표시되는 타이틀 헤더 -->
         <div style="margin-bottom: 22px; border-bottom: 2px solid #10b981; padding-bottom: 12px; display: flex; align-items: center; justify-content: space-between;">
           <div style="display: flex; align-items: center; gap: 10px;">
             <span style="font-size: 22px; display: inline-flex; align-items: center; line-height: 1;">🀄</span>
@@ -4051,7 +4050,6 @@
           <span style="font-size: 11px; color: #94a3b8; background: #1e293b; padding: 4px 10px; border-radius: 6px; display: inline-flex; align-items: center; line-height: 1;">작로그 (JangLog) 대국 리포트</span>
         </div>
 
-        <!-- Section 1: 최종 순위 및 우마·오카 포인트 -->
         <div style="margin-bottom: 20px;">
           <div style="font-size: 13px; font-weight: 800; color: #fbbf24; margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
             <span style="display: inline-flex; align-items: center; line-height: 1;">🏆</span> 최종 순위 및 우마·오카 포인트
@@ -4061,7 +4059,6 @@
           </div>
         </div>
 
-        <!-- Section 2: 해당 대국 점수 추이 그래프 -->
         <div style="background: #09101a; border-radius: 14px; border: 1px solid #1e293b; padding: 16px 20px; margin-bottom: 22px; box-sizing: border-box;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
             <div style="font-size: 13px; font-weight: 800; color: #ffffff; display: flex; align-items: center; gap: 6px;">
@@ -4070,7 +4067,6 @@
             <span style="font-size: 11px; color: #64748b; display: inline-flex; align-items: center; line-height: 1;">국별 점수 변동</span>
           </div>
 
-          <!-- 범례 (Legend) -->
           <div style="display: flex; justify-content: center; align-items: center; gap: 18px; margin-bottom: 12px;">
             ${activePlayers.map((p, idx) => `
               <div style="display: flex; align-items: center; gap: 6px; font-size: 11px; color: #cbd5e1; font-weight: 600;">
@@ -4080,19 +4076,17 @@
             `).join('')}
           </div>
 
-          <!-- 차트 캔버스 -->
           <div style="position: relative; width: 100%; height: 260px;">
             <canvas id="temp-summary-export-chart"></canvas>
           </div>
         </div>
 
-        <!-- Section 3: 플레이어별 대국 상세 데이터 (Flexbox 기반으로 변경하여 정렬 완벽 제어) -->
         <div>
           <div style="font-size: 13px; font-weight: 800; color: #38bdf8; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
             <span style="display: inline-flex; align-items: center; line-height: 1;">📊</span> 플레이어별 대국 상세 데이터 (화료·평균 타점·리치·방총)
           </div>
           <div style="background: #09101a; border-radius: 14px; border: 1px solid #1e293b; overflow: hidden; font-size: 11px;">
-            <!-- 헤더 행 -->
+            <!-- 헤더 행 ('주력 화료 역' 항목 제외) -->
             <div style="display: flex; align-items: center; border-bottom: 1px solid #1e293b; color: #94a3b8; font-weight: 700; height: 38px; padding: 0 16px;">
               <div style="flex: 1.2; text-align: left;">플레이어</div>
               <div style="flex: 1.5; text-align: center; color: #34d399;">화료 횟수 (화료율)</div>
@@ -4101,35 +4095,8 @@
               <div style="flex: 1.1; text-align: center; color: #fb7185;">방총 횟수 (방총률)</div>
               <div style="flex: 1.1; text-align: right; color: #fb7185;">평균 방총 실점</div>
             </div>
-            <!-- 데이터 행들 -->
             <div>
-              ${playerStats.map(ps => `
-                <div style="display: flex; align-items: center; border-bottom: 1px solid #1e293b; height: 50px; padding: 0 16px;">
-                  <div style="flex: 1.2; font-weight: 800; color: #ffffff; font-size: 13px; text-align: left; display: flex; align-items: center; gap: 8px;">
-                    <span style="width: 9px; height: 9px; border-radius: 50%; background: ${ps.color}; display: inline-block; flex-shrink: 0;"></span>
-                    <span>${ps.name}</span>
-                  </div>
-                  <div style="flex: 1.5; text-align: center;">
-                    <span style="color: #10b981; font-weight: 800; font-size: 12px;">${ps.wins}회</span>
-                    <span style="color: #94a3b8; font-size: 10px;"> (론${ps.rons}/쯔모${ps.tsumos}, ${ps.winRate}%)</span>
-                  </div>
-                  <div style="flex: 1.6; text-align: center;">
-                    <span style="color: #f59e0b; font-weight: 800; font-size: 12px;">${ps.avgWinScore > 0 ? ps.avgWinScore.toLocaleString() + '점' : '-'}</span>
-                    <span style="color: #94a3b8; font-size: 10px;">${ps.maxWinScore > 0 ? ` (최고 +${ps.maxWinScore.toLocaleString()})` : ''}</span>
-                  </div>
-                  <div style="flex: 1.1; text-align: center;">
-                    <span style="color: #f43f5e; font-weight: 800; font-size: 12px;">${ps.riichiCount}회</span>
-                    <span style="color: #94a3b8; font-size: 10px;"> (${ps.riichiRate}%)</span>
-                  </div>
-                  <div style="flex: 1.1; text-align: center;">
-                    <span style="color: #fb7185; font-weight: 800; font-size: 12px;">${ps.dealIns}회</span>
-                    <span style="color: #94a3b8; font-size: 10px;"> (${ps.dealInRate}%)</span>
-                  </div>
-                  <div style="flex: 1.1; text-align: right; color: #fb7185; font-weight: 800; font-size: 12px;">
-                    ${ps.avgDealInScore > 0 ? '-' + ps.avgDealInScore.toLocaleString() + '점' : '-'}
-                  </div>
-                </div>
-              `).join('')}
+              ${statsRowsHtml}
             </div>
           </div>
         </div>
@@ -4137,7 +4104,7 @@
         <div style="margin-top: 14px; text-align: right; font-size: 10px; color: #475569;">
           작로그 (JangLog) · ${new Date().toLocaleDateString()} 대국 리포트
         </div>
-       `;
+      `;
         
       document.body.appendChild(wrapper);
 
