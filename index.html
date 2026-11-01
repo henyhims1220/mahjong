@@ -60,7 +60,16 @@
 
       <!-- Navigation Tabs -->
       <nav class="flex flex-wrap items-center bg-slate-800/80 p-1 rounded-xl border border-slate-700/70 gap-1">
-        <button id="tab-btn-board" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition bg-emerald-600 text-white shadow">
+        <button id="tab-btn-monthly" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition bg-emerald-600 text-white shadow">
+          월별 & 역대 기록
+        </button>
+        <button id="tab-btn-player" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition text-sky-300 hover:text-sky-200">
+          👤 플레이어별 기록실
+        </button>
+        <button id="tab-btn-archive" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition text-amber-300 hover:text-amber-200">
+          📁 대국 아카이브
+        </button>
+        <button id="tab-btn-board" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition text-slate-300 hover:text-white">
           대국 & 화료 기록
         </button>
         <button id="tab-btn-history" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition text-slate-300 hover:text-white">
@@ -69,15 +78,6 @@
         <button id="tab-btn-stats" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition text-slate-300 hover:text-white">
           역 분석 & 최종 정산
         </button>
-        <button id="tab-btn-player" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition text-sky-300 hover:text-sky-200">
-          👤 플레이어별 기록실
-        </button>
-        <button id="tab-btn-monthly" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition text-slate-300 hover:text-white">
-          월별 & 역대 기록
-        </button>
-        <button id="tab-btn-archive" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition text-amber-300 hover:text-amber-200">
-          📁 대국 아카이브
-        </button>
       </nav>
 
       <!-- Action Buttons -->
@@ -85,14 +85,8 @@
         <button id="btn-auth-lock" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-rose-950/80 hover:bg-rose-900 text-rose-200 border border-rose-700/60 transition flex items-center gap-1.5 shadow">
           <span id="lbl-auth-lock">🔒 기록 잠김 (PW 인증/설정)</span>
         </button>
-        <button id="btn-download-html" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-900/80 hover:bg-emerald-800 text-emerald-200 border border-emerald-600/50 transition flex items-center gap-1.5 shadow">
-          <span>📥 HTML 파일 저장</span>
-        </button>
         <button id="btn-open-settings" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition flex items-center gap-1.5">
           <span>⚙️ 룰/이름 설정</span>
-        </button>
-        <button id="btn-export-summary" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-emerald-300 border border-slate-700 transition flex items-center gap-1.5">
-          <span>📋 결과 요약 복사</span>
         </button>
       </div>
     </div>
@@ -202,6 +196,7 @@
             <p class="font-bold text-sm sm:text-base">토비 발생 혹은 종국 조건 충족으로 대국이 종료되었습니다!</p>
             <p class="text-xs text-slate-400">상단의 [역 분석 & 최종 정산], [👤 플레이어별 기록실], 또는 [📁 대국 아카이브] 탭에서 상세 결과를 확인하세요.</p>
             <div class="pt-2 flex justify-center gap-2">
+              <button type="button" id="btn-banner-archive-save" class="hidden px-4 py-2 rounded-lg text-xs font-bold bg-amber-500 text-slate-950 hover:bg-amber-400 transition">📁 아카이브에 저장</button>
               <button type="button" id="btn-banner-view-stats" class="px-4 py-2 rounded-lg text-xs font-bold bg-emerald-500 text-slate-950 hover:bg-emerald-400 transition">최종 정산 보기</button>
               <button type="button" id="btn-banner-new-match" class="px-4 py-2 rounded-lg text-xs font-bold bg-slate-800 text-slate-200 hover:bg-slate-700 border border-slate-700 transition">새 대국 시작</button>
             </div>
@@ -347,8 +342,8 @@
             <div class="bg-slate-950/60 p-3.5 rounded-xl border border-slate-800/80 space-y-3">
               <div class="flex flex-wrap items-center justify-between gap-3">
                 <div class="flex flex-wrap items-center gap-1.5 w-full">
-                  <span class="text-xs font-semibold text-rose-300 mr-2">🔥 이번 국 리치 선언자 (1,000점 공탁 · 리치율 자동 반영):</span>
-                  <div id="riichi-player-toggles" class="flex flex-wrap gap-2"></div>
+                  <span class="text-xs sm:text-sm font-semibold text-rose-300 mr-2">🔥 이번 국 리치 선언자 (1,000점 공탁 · 리치율 자동 반영):</span>
+                  <div id="riichi-player-toggles" class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 w-full mt-1"></div>
                 </div>
               </div>
 
@@ -483,7 +478,7 @@
 
               <div class="pt-3 border-t border-slate-800">
                 <span class="block text-xs font-semibold text-slate-300 mb-2">이번 국 리치 선언자(공탁금 1,000점 적립):</span>
-                <div id="draw-riichi-toggles" class="flex flex-wrap gap-2"></div>
+                <div id="draw-riichi-toggles" class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 w-full mt-1"></div>
               </div>
 
               <div>
@@ -609,6 +604,9 @@
               <option value="current">현재 진행 중인 대국만</option>
               <option value="archive">아카이브 저장 대국만</option>
             </select>
+            <button type="button" id="btn-player-save-image" class="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 transition">
+              📷 이미지로 저장
+            </button>
           </div>
         </div>
 
@@ -994,9 +992,10 @@
   <div id="modal-archive-save" class="fixed inset-0 z-50 hidden bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-5 shadow-2xl space-y-4">
       <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-        <h3 class="text-base font-bold text-amber-300">💾 현재 대국 아카이브 저장</h3>
+        <h3 id="archive-save-title" class="text-base font-bold text-amber-300">💾 현재 대국 아카이브 저장</h3>
         <button type="button" id="btn-close-archive-save" class="text-slate-400 hover:text-white text-sm font-bold px-2 py-1">✕</button>
       </div>
+      <p id="archive-save-reason" class="hidden text-xs text-amber-200 bg-amber-500/10 border border-amber-500/30 rounded-lg px-3 py-2"></p>
       <div>
         <label for="input-archive-save-memo" class="block text-xs text-slate-300 mb-1.5">저장할 대국 제목/메모를 입력하세요:</label>
         <input id="input-archive-save-memo" type="text" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white" />
@@ -1027,6 +1026,27 @@
   </div>
 
   
+  <!-- 대국 결과 공유 모달 (Web Share: 카카오톡 등) -->
+  <div id="modal-share" style="z-index:70" class="fixed inset-0 hidden bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full max-h-[92vh] overflow-y-auto p-5 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="text-base font-bold text-amber-300">📤 대국 결과 공유</h3>
+        <button type="button" id="btn-close-share" class="text-slate-400 hover:text-white text-sm font-bold px-2 py-1">✕</button>
+      </div>
+      <div class="bg-slate-950 border border-slate-800 rounded-xl p-2 min-h-[120px] flex items-center justify-center">
+        <img id="share-preview-img" alt="대국 결과 미리보기" class="hidden w-full rounded-lg" />
+        <span id="share-preview-loading" class="text-xs text-slate-400">🖼️ 결과 이미지를 준비하는 중입니다...</span>
+      </div>
+      <p id="share-status" class="text-xs text-slate-400"></p>
+      <button type="button" id="btn-share-native" disabled class="w-full py-3.5 rounded-xl text-sm font-extrabold bg-amber-500 text-slate-950 hover:bg-amber-400 disabled:opacity-40 disabled:cursor-not-allowed transition">📤 공유하기 (카카오톡 등 선택)</button>
+      <div class="grid grid-cols-2 gap-2">
+        <button type="button" id="btn-share-download" disabled class="py-2.5 rounded-xl text-xs font-bold bg-slate-800 text-slate-200 hover:bg-slate-700 border border-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition">📥 이미지 저장</button>
+        <button type="button" id="btn-share-copytext" class="py-2.5 rounded-xl text-xs font-bold bg-slate-800 text-slate-200 hover:bg-slate-700 border border-slate-700 transition">📋 요약 텍스트 복사</button>
+      </div>
+      <pre id="share-text-preview" class="text-[11px] leading-relaxed text-slate-400 bg-slate-950 border border-slate-800 rounded-xl p-3 whitespace-pre-wrap"></pre>
+    </div>
+  </div>
+
   <!-- UPGRADED Archive Detail Modal (With Score Graph & Player Stats Breakdown) -->
   <div id="modal-archive-detail" class="fixed inset-0 z-50 hidden bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
     <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-4xl w-full p-4 sm:p-6 shadow-2xl space-y-4 max-h-[90vh] flex flex-col">
@@ -1062,6 +1082,9 @@
 
       <div class="flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-slate-800">
         <div class="flex flex-wrap items-center gap-2">
+          <button type="button" id="btn-archive-detail-share" class="px-3.5 py-2 rounded-lg text-xs font-bold bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-500/40 transition">
+            📤 공유
+          </button>
           <button type="button" id="btn-archive-detail-save-image" class="px-3.5 py-2 rounded-lg text-xs font-bold bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 transition">
             📷 이미지로 저장
           </button>
@@ -1237,7 +1260,7 @@
       snapshots: [],
       archives: [],
 
-      activeTab: 'board',
+      activeTab: 'monthly',
       outcomeType: 'ron',
       winnerIds: [0],
       loserId: 1,
@@ -1728,6 +1751,15 @@
       };
     }
 
+    // 더블/트리플론: 방총자 기준 시계 방향으로 가장 가까운 화료자(선취자)만 본장·공탁금을 수령
+    function getRonHeadWinnerId() {
+      const ids = state.winnerIds;
+      if (ids.length <= 1) return ids.length === 1 ? ids[0] : null;
+      if (state.loserId === null || state.loserId === undefined) return null;
+      const pCount = getPlayerCount();
+      return [...ids].sort((a, b) => ((a - state.loserId + pCount) % pCount) - ((b - state.loserId + pCount) % pCount))[0];
+    }
+
     function calculateHandPreview() {
       const activeWid = state.activeConfigWinnerId ?? state.winnerIds[0] ?? 0;
       ensureWinnerConfig(activeWid);
@@ -1752,10 +1784,18 @@
       }
 
       if (state.outcomeType === 'ron') {
-        previewTotalGain = singleCalc.baseHandScore + honbaBonusTotal + riichiBonus;
+        const isMultiRon = state.winnerIds.length > 1;
+        const headId = getRonHeadWinnerId();
+        const isHeadWinner = !isMultiRon || (headId !== null && activeWid === headId);
+        const ronHonba = isHeadWinner ? honbaBonusTotal : 0;
+        const ronRiichi = isHeadWinner ? riichiBonus : 0;
+        previewTotalGain = singleCalc.baseHandScore + ronHonba + ronRiichi;
         detailText = `론 타점 ${singleCalc.baseHandScore.toLocaleString()}점` +
-          (honbaBonusTotal > 0 ? ` + 본장 ${honbaBonusTotal}점 (${state.honba}본장)` : '') +
-          (riichiBonus > 0 ? ` + 리치봉 ${riichiBonus.toLocaleString()}점` : '');
+          (ronHonba > 0 ? ` + 본장 ${ronHonba}점 (${state.honba}본장)` : '') +
+          (ronRiichi > 0 ? ` + 공탁 리치봉 ${ronRiichi.toLocaleString()}점` : '') +
+          (isMultiRon
+            ? (headId === null ? ' · 방총자를 고르면 선취자가 정해집니다' : (isHeadWinner ? ' · 선취자: 본장·공탁금 수령' : ' · 본장·공탁금은 선취자만 수령 (제외)'))
+            : '');
       } else {
         const eachHonba = 100 * state.honba;
         const pCount = getPlayerCount();
@@ -2069,10 +2109,13 @@
       showToast('✨ 샘플 대국 및 아카이브 데이터가 로드되었습니다!');
     }
 
-    function resetNewMatch() {
-      if (state.history.length > 0) {
-        archiveCurrentMatch('자동 백업 (새 대국 초기화 시점)');
+    function resetNewMatch(options) {
+      // 종국 후 아직 아카이브에 저장하지 않은 대국이면, 저장 여부(제목)를 먼저 확인
+      if (!(options && options.force === true) && state.pendingArchive && state.history.length > 0) {
+        requestAutoArchive('pending', () => resetNewMatch({ force: true }));
+        return;
       }
+      state.pendingArchive = false;
 
       const startPts = getStartingScore();
       state.players.forEach(p => { p.score = startPts; });
@@ -2105,7 +2148,7 @@
       state.tenpaiDeclared = [false, false, false, false];
       saveToStorage();
       renderAll();
-      showToast('🔄 기존 대국은 아카이브에 보존되고, 새 대국이 초기화되었습니다.');
+      showToast('🔄 새 대국이 초기화되었습니다.');
     }
 
     function archiveCurrentMatch(memoLabel, customRecordType) {
@@ -2124,9 +2167,34 @@
         players: JSON.parse(JSON.stringify(state.players))
       };
       state.archives.unshift(archiveItem);
+      state.pendingArchive = false;
       saveToStorage();
       renderAll();
       showToast('💾 대국이 아카이브 탭에 영구 저장되었습니다!');
+      return archiveItem.id;
+    }
+
+    // 종국(남 4국 종료 / 토비 등) 시 아카이브 저장 전에 제목을 물어봄
+    window.archiveSaveAfter = null;
+    function requestAutoArchive(kind, afterSave) {
+      state.pendingArchive = true;
+      const reasons = {
+        tobi: '💥 토비가 발생해 대국이 종료되었습니다.',
+        regular: '🏆 정규 국이 종료되었습니다.',
+        extension: '🏆 연장전이 종료되어 대국이 끝났습니다.',
+        pending: '📁 종국한 대국이 아직 아카이브에 저장되지 않았습니다. 저장 후 계속 진행합니다.',
+        banner: '📁 종국한 대국을 아카이브에 저장합니다.'
+      };
+      document.getElementById('archive-save-title').textContent = '📁 대국 종료 · 아카이브 저장';
+      const reasonEl = document.getElementById('archive-save-reason');
+      reasonEl.textContent = reasons[kind] || '';
+      reasonEl.classList.toggle('hidden', !reasons[kind]);
+      const input = document.getElementById('input-archive-save-memo');
+      input.value = `대국 (${new Date().toLocaleDateString()})`;
+      window.archiveSaveAfter = afterSave || null;
+      window.archiveSaveShare = (kind !== 'pending'); // 종국 저장 직후 공유 창 열기 (초기화 확인용 저장은 제외)
+      document.getElementById('modal-archive-save').classList.remove('hidden');
+      setTimeout(() => input.select(), 50);
     }
 
     function renderTopBoard() {
@@ -2210,6 +2278,7 @@
       const winSection = document.getElementById('form-win-section');
       const drawSection = document.getElementById('form-draw-section');
 
+      document.getElementById('btn-banner-archive-save').classList.toggle('hidden', !(state.isGameOver && state.pendingArchive));
       if (state.isGameOver) {
         gameOverBanner.classList.remove('hidden');
         winSection.classList.add('hidden');
@@ -2261,6 +2330,7 @@
             multiArea.classList.remove('hidden');
 
             configTabsContainer.innerHTML = '';
+            const ronHeadId = getRonHeadWinnerId();
             state.winnerIds.forEach(wid => {
               const pObj = state.players.find(p => p.id === wid);
               const isActive = state.activeConfigWinnerId === wid;
@@ -2271,7 +2341,10 @@
                   ? 'bg-emerald-600 border-emerald-400 text-white shadow'
                   : 'bg-slate-900 border-slate-700 text-slate-400 hover:text-white'
               }`;
-              b.innerHTML = `<span>🎯 ${pObj?.name || '플레이어'} 패 설정</span>`;
+              const headBadge = ronHeadId === null ? '' : (wid === ronHeadId
+                ? '<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-500/25 text-amber-200 border border-amber-500/40">선취 · 본장/공탁 수령</span>'
+                : '<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-700/70 text-slate-300 border border-slate-600">본장/공탁 제외</span>');
+              b.innerHTML = `<span>🎯 ${pObj?.name || '플레이어'} 패 설정</span>${headBadge}`;
               b.addEventListener('click', () => {
                 state.activeConfigWinnerId = wid;
                 renderRecorderForm();
@@ -2454,12 +2527,12 @@
         const createBtn = () => {
           const b = document.createElement('button');
           b.type = 'button';
-          b.className = `px-3 py-1.5 rounded-lg text-xs font-bold border transition flex items-center gap-1.5 ${
+          b.className = `w-full min-h-[64px] sm:min-h-[72px] px-3 py-3 rounded-xl border-2 transition flex flex-col items-center justify-center gap-1 ${
             active
-              ? 'bg-rose-600/30 border-rose-400 text-rose-200 shadow'
-              : 'bg-slate-900 border-slate-700 text-slate-400 hover:text-white'
+              ? 'bg-rose-600/40 border-rose-400 text-rose-100 shadow-lg shadow-rose-950/40'
+              : 'bg-slate-900 border-slate-700 text-slate-400 hover:text-white hover:border-slate-500'
           }`;
-          b.innerHTML = `<span>${p.name}</span><span class="${active ? 'text-rose-300' : 'text-slate-500'}">${active ? '🔥 리치ON' : '리치 OFF'}</span>`;
+          b.innerHTML = `<span class="text-sm sm:text-base font-extrabold truncate max-w-full">${p.name}</span><span class="text-xs sm:text-sm font-bold ${active ? 'text-rose-200' : 'text-slate-500'}">${active ? '🔥 리치 ON' : '리치 OFF'}</span>`;
           b.addEventListener('click', () => {
             state.riichiDeclared[p.id] = !state.riichiDeclared[p.id];
             if (state.winnerIds.includes(p.id) && state.riichiDeclared[p.id]) {
@@ -2613,7 +2686,7 @@
       const isRon = h.outcome === 'ron';
       const isMulti = winnerHands.length > 1;
 
-      const handsDetailHTML = winnerHands.map(wh => {
+      const handsDetailHTML = winnerHands.map((wh, whIdx) => {
         const pName = pRef[wh.winnerId]?.name || '플레이어';
         const furoBadge = hideFuroBadge ? '' : (wh.isFuro
           ? '<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">후로(울기)</span>'
@@ -2624,12 +2697,19 @@
           }">${yn}</span>`
         ).join('');
         const hanFuInfo = wh.isQuickScoreOnly ? wh.tierName : `${wh.tierName}, ${wh.totalHan}판 ${wh.fu}부`;
+        // 더블/트리플론: 선취자(첫 번째)만 본장·공탁금 수령
+        const bonusBadge = isMulti
+          ? (whIdx === 0
+            ? '<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-500/25 text-amber-200 border border-amber-500/40">선취 · 본장/공탁 포함</span>'
+            : '<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-700/70 text-slate-300 border border-slate-600">본장/공탁 제외</span>')
+          : '';
         return `
           <div class="bg-slate-900/90 p-2.5 rounded-lg border border-slate-800 space-y-1">
             <div class="flex items-center justify-between text-xs">
               <div class="flex items-center gap-1.5">
                 <span class="font-bold text-white">🎯 ${pName}</span>
                 ${furoBadge}
+                ${bonusBadge}
               </div>
               <span class="font-black text-emerald-400">+${wh.totalGain.toLocaleString()}점 (${hanFuInfo})</span>
             </div>
@@ -2645,7 +2725,7 @@
               <span class="text-xs font-extrabold px-2 py-0.5 rounded bg-slate-800 text-amber-300">${h.roundLabel} ${h.honba}본장</span>
               <span class="text-xs font-bold px-2 py-0.5 rounded ${
                 isRon ? (isMulti ? 'bg-rose-600/30 text-rose-200 border border-rose-500/50' : 'bg-rose-500/20 text-rose-300 border border-rose-500/30') : 'bg-sky-500/20 text-sky-300 border border-sky-500/30'
-              }">${isRon ? (isMulti ? '🔥 더블/트리플론' : '론 (Ron)') : '쯔모 (Tsumo)'}</span>
+              }">${isRon ? (isMulti ? (winnerHands.length === 2 ? '🔥 더블론' : '⚡ 트리플론') : '론 (Ron)') : '쯔모 (Tsumo)'}</span>
             </div>
             <div class="flex items-center gap-2">
               <span class="text-sm font-black text-emerald-400">총합 +${(h.totalGain || 0).toLocaleString()}점</span>
@@ -3218,6 +3298,9 @@
             </div>
 
             <div class="flex items-center justify-end gap-2 pt-1">
+              <button type="button" onclick="openShareModal('${arch.id}')" class="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-500/40 transition">
+                📤 공유
+              </button>
               <button type="button" onclick="openArchiveImageSave('${arch.id}')" class="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 transition">
                 📷 이미지로 저장
               </button>
@@ -3945,6 +4028,8 @@
 
         if (winners.includes(dealerIdx)) {
           state.honba += 1;
+          // 오야 연장(렌짱) 중에도 토비는 즉시 종국, 마지막 국/연장전은 종료 판정(아가리야메)
+          if (!checkTobiGameEnd(pCount)) checkAgariYame(pCount);
         } else {
           state.honba = 0;
           checkGameProgression(pCount, dealerIdx);
@@ -4004,6 +4089,8 @@
 
         if (winnerId === dealerIdx) {
           state.honba += 1;
+          // 오야 연장(렌짱) 중에도 토비는 즉시 종국, 마지막 국/연장전은 종료 판정(아가리야메)
+          if (!checkTobiGameEnd(pCount)) checkAgariYame(pCount);
         } else {
           state.honba = 0;
           checkGameProgression(pCount, dealerIdx);
@@ -4068,7 +4155,10 @@
 
       state.honba += 1;
       if (!tenpaiIds.includes(dealerIdx)) {
-        checkGameProgression(pCount, dealerIdx);
+        checkGameProgression(pCount, dealerIdx, { isDraw: true });
+      } else {
+        // 오야 텐파이 연장 중에도 토비 체크 (마지막 정규 국의 유국 연장은 종료하지 않고, 서입 이후엔 30,000점 도달 시 종료)
+        if (!checkTobiGameEnd(pCount)) checkAgariYame(pCount, { isDraw: true });
       }
 
       state.riichiDeclared = [false, false, false, false];
@@ -4079,14 +4169,54 @@
       showToast(state.isGameOver ? '🏆 대국이 종료되었습니다!' : `📌 ${roundLabel} 유국 기록이 저장되었습니다.`);
     }
 
-    function checkGameProgression(pCount, prevDealerIdx) {
+    // 토비(0점 미만) 발생 시 즉시 종국 처리. 오야 연장 여부와 상관없이 매 국 종료 후 호출됨.
+    function checkTobiGameEnd(pCount) {
       const hasTobi = state.players.slice(0, pCount).some(p => p.score < 0);
       if (hasTobi && state.tobiRule !== false) {
         state.isGameOver = true;
-        archiveCurrentMatch('자동 백업 (토비 종국)');
-        showToast('💥 토비 발생! 대국이 즉시 종료되고 아카이브에 백업되었습니다.');
-        return;
+        requestAutoArchive('tobi');
+        showToast('💥 토비 발생! 대국이 즉시 종료되었습니다. 제목을 입력해 아카이브에 저장하세요.');
+        return true;
       }
+      return false;
+    }
+
+    // 마지막 정규 국(남 4국 / 동풍전은 동 4국)을 진행 중인지
+    function isInLastRegularRound(pCount) {
+      const dealerPos = state.roundNum % pCount;
+      if (dealerPos !== pCount - 1) return false;
+      return (state.gameMode.includes('hanchan') && state.roundWind === 1) ||
+             (state.gameMode.includes('tonpuu') && state.roundWind === 0);
+    }
+
+    // 오야가 연장(렌짱)되는 경우의 종료 판정
+    //  - 마지막 정규 국: 오야가 화료해 1위(30,000점 이상)면 종료(아가리야메). 유국 연장(오야 텐파이)은 종료하지 않음.
+    //  - 서입 이후 연장전: 30,000점 이상인 사람이 나오면 즉시 종료
+    function checkAgariYame(pCount, opts) {
+      const isDraw = !!(opts && opts.isDraw);
+      const scores = state.players.slice(0, pCount).map(p => p.score);
+      const topScore = Math.max(...scores);
+      const returnScore = getReturnScore();
+      let ended = false;
+      if (isInLastRegularRound(pCount)) {
+        if (!isDraw) {
+          const dealerPos = state.roundNum % pCount;
+          ended = topScore >= returnScore && state.players[dealerPos].score === topScore;
+        }
+      } else if (state.roundWind >= 2) {
+        ended = topScore >= returnScore;
+      }
+      if (ended) {
+        state.isGameOver = true;
+        requestAutoArchive(state.roundWind >= 2 ? 'extension' : 'regular');
+        showToast('🏆 대국이 종료되었습니다. 제목을 입력해 아카이브에 저장하세요.');
+      }
+      return ended;
+    }
+
+    function checkGameProgression(pCount, prevDealerIdx, opts) {
+      if (checkTobiGameEnd(pCount)) return;
+      const endedByDraw = !!(opts && opts.isDraw);
 
       state.roundNum += 1;
       
@@ -4098,10 +4228,15 @@
         const topScore = Math.max(...activePlayers.map(p => p.score));
         const returnScore = getReturnScore();
 
-        if (topScore >= returnScore) {
+        if (endedByDraw) {
+          // 마지막 정규 국이 화료 없이 유국으로 끝나면 점수와 상관없이 서입
+          state.roundWind = 2;
+          state.roundNum = 0;
+          showToast(`🔄 ${state.gameMode.includes('tonpuu') ? '동' : '남'} ${pCount}국이 유국으로 끝나 서입(서국 연장전)에 돌입합니다!`);
+        } else if (topScore >= returnScore) {
           state.isGameOver = true;
-          archiveCurrentMatch('자동 백업 (정규 국 종료)');
-          showToast('🏆 1위가 3만 점을 넘겨 대국이 종료되고 아카이브에 백업되었습니다!');
+          requestAutoArchive('regular');
+          showToast('🏆 대국이 종료되었습니다. 제목을 입력해 아카이브에 저장하세요.');
         } else {
           state.roundWind = 2;
           state.roundNum = 0;
@@ -4113,8 +4248,8 @@
         const returnScore = getReturnScore();
         if (topScore >= returnScore) {
           state.isGameOver = true;
-          archiveCurrentMatch('자동 백업 (연장전 종료)');
-          showToast('🏆 연장전 중 1위가 3만 점을 달성하여 대국이 종료되고 아카이브에 백업되었습니다!');
+          requestAutoArchive('extension');
+          showToast('🏆 연장전이 종료되었습니다. 제목을 입력해 아카이브에 저장하세요.');
         } else if (state.roundNum >= pCount) {
           state.roundWind += 1;
           state.roundNum = 0;
@@ -4195,34 +4330,20 @@
       }
     }
 
-    function downloadHtmlFile() {
-      saveToSupabase();
-      const fullHtml = document.documentElement.outerHTML;
-      const blob = new Blob([fullHtml], { type: 'text/html;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `janglog_match_${Date.now()}.html`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      showToast('📥 현재 상태가 포함된 HTML 파일이 다운로드되었습니다!');
-    }
-
-      async function exportMatchSummaryImage(customTitle, archiveId) {
+      async function exportMatchSummaryImage(customTitle, archiveId, outputMode) {
+      const asCanvas = outputMode === 'canvas'; // 공유용: 파일로 저장하지 않고 canvas만 반환
       if (typeof html2canvas === 'undefined') {
         showToast('⚠️ html2canvas 라이브러리를 불러오지 못했습니다.');
-        return;
+        return null;
       }
 
-      showToast('📸 고화질 결과 리포트 이미지를 생성하는 중입니다...');
+      if (!asCanvas) showToast('📸 고화질 결과 리포트 이미지를 생성하는 중입니다...');
 
       // 아카이브 대국이면 해당 아카이브 데이터를, 아니면 현재 진행 중인 대국 데이터를 사용
       const srcArch = archiveId ? (state.archives || []).find(a => a.id === archiveId) : null;
       if (archiveId && !srcArch) {
         showToast('⚠️ 해당 아카이브 대국을 찾을 수 없습니다.');
-        return;
+        return null;
       }
       const srcMode = srcArch ? (srcArch.gameMode || state.gameMode) : state.gameMode;
       const srcHistory = srcArch ? (srcArch.history || []) : state.history;
@@ -4445,6 +4566,7 @@
 
         tempChart.destroy();
         document.body.removeChild(wrapper);
+        if (asCanvas) return canvas;
 
         const image = canvas.toDataURL('image/png');
         const link = document.createElement('a');
@@ -4456,9 +4578,355 @@
         if (wrapper.parentNode) document.body.removeChild(wrapper);
         console.error('이미지 생성 오류:', err);
         showToast('❌ 이미지 생성 중 오류가 발생했습니다.');
+        return null;
       }
     }
         
+    // ===== 플레이어 기록 이미지: Canvas로 직접 그려서 글자 깨짐을 방지 =====
+    function buildPlayerProfileCanvas(name, p, scopeText, dateText) {
+      const FONT = '"Noto Sans KR","Noto Sans CJK KR","Malgun Gothic","Apple SD Gothic Neo",sans-serif';
+      const SCALE = 2, W = 1100, PAD = 32, CW = W - PAD * 2;
+      const C = {
+        bg: '#0b131e', card: '#050b14', cardAlt: '#0f172a', line: '#1e293b',
+        white: '#ffffff', s300: '#cbd5e1', s400: '#94a3b8', s500: '#64748b',
+        emerald: '#34d399', emerald3: '#6ee7b7', amber3: '#fcd34d', amber4: '#fbbf24',
+        pink: '#f472b6', rose: '#fb7185', rose5: '#f43f5e', sky3: '#7dd3fc', sky4: '#38bdf8'
+      };
+
+      // ---- 지표 계산 (플레이어 기록실 화면과 동일한 공식) ----
+      const handsDenom = p.recordedHands > 0 ? p.recordedHands : 1;
+      const matchesDenom = p.matchesCount > 0 ? p.matchesCount : 1;
+      const pct1 = (n, d, ok) => ok ? ((n / d) * 100).toFixed(1) : '0.0';
+      const winRate = pct1(p.wins, handsDenom, p.recordedHands > 0);
+      const riichiRate = pct1(p.riichiCount, handsDenom, p.recordedHands > 0);
+      const dealInRate = pct1(p.dealIns, handsDenom, p.recordedHands > 0);
+      const furoWinRate = pct1(p.furoWins, p.wins || 1, p.wins > 0);
+      const avgWinScore = p.wins > 0 ? Math.round(p.winScoreSum / p.wins) : 0;
+      const avgDealInScore = p.dealIns > 0 ? Math.round(p.dealInScoreSum / p.dealIns) : 0;
+      const weighted = p.ranks[0] * 1 + p.ranks[1] * 2 + p.ranks[2] * 3 + p.ranks[3] * 4;
+      const avgRank = p.matchesCount > 0 ? (weighted / matchesDenom).toFixed(2) : '-';
+      const top2Rate = pct1(p.ranks[0] + p.ranks[1], matchesDenom, p.matchesCount > 0);
+      const firstRate = pct1(p.ranks[0], matchesDenom, p.matchesCount > 0);
+      const avoid4thRate = pct1(p.ranks[0] + p.ranks[1] + p.ranks[2], matchesDenom, p.matchesCount > 0);
+      const ptText = `${p.totalPt >= 0 ? '+' : ''}${p.totalPt}pt`;
+
+      const kpis = [
+        { label: '화료율 (화료횟수)', value: `${winRate}%`, color: C.emerald, sub: `${p.wins}회 화료 / ${p.recordedHands}국` },
+        { label: '평균 화료 타점', value: `${avgWinScore.toLocaleString()}점`, color: C.amber3, sub: `최고 +${(p.bestHand?.totalGain || 0).toLocaleString()}점` },
+        { label: '리치율 (리치횟수)', value: `${riichiRate}%`, color: C.pink, sub: `${p.riichiCount}회 선언 / ${p.recordedHands}국` },
+        { label: '방총률 (방총횟수)', value: `${dealInRate}%`, color: C.rose, sub: `${p.dealIns}회 (평균 -${avgDealInScore.toLocaleString()})` },
+        { label: '화료 시 후로 비중', value: `${furoWinRate}%`, color: C.sky3, sub: `멘젠 ${p.menzenWins} / 후로 ${p.furoWins}` },
+        { label: '평균 순위', value: `${avgRank}위`, color: C.white, sub: `1위율 ${firstRate}%` },
+        { label: '연대율 (1·2위)', value: `${top2Rate}%`, color: C.emerald3, sub: `라스회피 ${avoid4thRate}%` },
+        { label: '누적 승점 (Pt)', value: ptText, color: p.totalPt >= 0 ? C.emerald : C.rose, sub: `총 ${p.matchesCount}대국 합산` }
+      ];
+      const rankRows = [
+        { label: '1위 (Top)', color: '#fbbf24' }, { label: '2위 (2nd)', color: '#34d399' },
+        { label: '3위 (3rd)', color: '#38bdf8' }, { label: '4위 (Last)', color: '#f43f5e' }
+      ].map((r, i) => {
+        const cnt = p.ranks[i] || 0;
+        return { ...r, cnt, pct: p.matchesCount > 0 ? Math.round((cnt / matchesDenom) * 100) : 0 };
+      });
+      const styleBoxes = [
+        { label: '론 / 쯔모', value: `${p.rons}회 / ${p.tsumos}회`, color: C.white },
+        { label: '멘젠 / 후로', value: `${p.menzenWins}회 / ${p.furoWins}회`, color: C.emerald3 },
+        { label: '역 생략 빠른기록', value: `${p.quickScoreWins}회`, color: C.sky3 }
+      ];
+      const yakuEntries = Object.entries(p.yakuMap || {}).sort((a, b) => b[1] - a[1]);
+
+      // ---- 도우미 ----
+      const rr = (ctx, x, y, w, h, r) => {
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.arcTo(x + w, y, x + w, y + h, r);
+        ctx.arcTo(x + w, y + h, x, y + h, r);
+        ctx.arcTo(x, y + h, x, y, r);
+        ctx.arcTo(x, y, x + w, y, r);
+        ctx.closePath();
+      };
+      const fit = (ctx, text, maxW) => {
+        if (ctx.measureText(text).width <= maxW) return text;
+        let t = text;
+        while (t.length > 1 && ctx.measureText(t + '…').width > maxW) t = t.slice(0, -1);
+        return t + '…';
+      };
+      const layoutRich = (ctx, segs, maxW, size) => {
+        const lines = [[]];
+        let x = 0;
+        segs.forEach(seg => {
+          ctx.font = `${seg.w || 500} ${size}px ${FONT}`;
+          (seg.t.match(/\S+\s*|\s+/g) || []).forEach(word => {
+            const wd = ctx.measureText(word).width;
+            if (x + wd > maxW && x > 0) { lines.push([]); x = 0; word = word.replace(/^\s+/, ''); }
+            const w2 = ctx.measureText(word).width;
+            lines[lines.length - 1].push({ t: word, c: seg.c, w: seg.w || 500, x });
+            x += w2;
+          });
+        });
+        return lines;
+      };
+
+      // ---- 레이아웃 계산 ----
+      const mctx = document.createElement('canvas').getContext('2d');
+      const KPI_Y = 160, KPI_H = 92, GAP = 14;
+      const kpiW = (CW - GAP * 3) / 4;
+      const SEC_Y = KPI_Y + KPI_H * 2 + GAP + 24;
+      const LW = 410, RW = CW - LW - 18;
+      const RX = PAD + LW + 18;
+
+      const leftH = 398;
+
+      const YCOLS = 3, YGAP = 10, YH = 54;
+      const yW = (RW - 36 - YGAP * (YCOLS - 1)) / YCOLS;
+      const yRows = Math.max(1, Math.ceil(yakuEntries.length / YCOLS));
+      const yGridH = yakuEntries.length === 0 ? 70 : yRows * YH + (yRows - 1) * YGAP;
+      const bestSegs = p.bestHand
+        ? [
+            { t: '🏅 역대 최고 타점 손패: ', c: C.white, w: 700 },
+            { t: `[${p.bestHand.sessionTitle} · ${p.bestHand.roundLabel}] `, c: C.s300, w: 500 },
+            { t: `${p.bestHand.tierName} (+${p.bestHand.totalGain.toLocaleString()}점)`, c: C.amber3, w: 700 },
+            { t: ` — ${(p.bestHand.yakuNames || []).join(' · ')}`, c: C.s300, w: 500 }
+          ]
+        : [{ t: '🏅 역대 최고 타점 손패: ', c: C.white, w: 700 }, { t: '아직 화료 기록이 없습니다.', c: C.s300, w: 500 }];
+      const BEST_LH = 20;
+      const bestLines = layoutRich(mctx, bestSegs, RW - 36 - 28, 12.5);
+      const bestH = bestLines.length * BEST_LH + 24;
+      const rightH = 78 + yGridH + 16 + bestH + 18;
+      const secH = Math.max(leftH, rightH);
+      const H = SEC_Y + secH + PAD;
+
+      // ---- 그리기 ----
+      const canvas = document.createElement('canvas');
+      canvas.width = W * SCALE;
+      canvas.height = Math.ceil(H * SCALE);
+      const ctx = canvas.getContext('2d');
+      ctx.scale(SCALE, SCALE);
+      ctx.textBaseline = 'alphabetic';
+      const T = (text, x, y, size, weight, color, align) => {
+        ctx.font = `${weight} ${size}px ${FONT}`;
+        ctx.fillStyle = color;
+        ctx.textAlign = align || 'left';
+        ctx.fillText(text, x, y);
+      };
+      const card = (x, y, w, h, r, fill, stroke) => {
+        rr(ctx, x, y, w, h, r);
+        ctx.fillStyle = fill; ctx.fill();
+        if (stroke) { ctx.lineWidth = 1; ctx.strokeStyle = stroke; ctx.stroke(); }
+      };
+
+      ctx.fillStyle = C.bg;
+      ctx.fillRect(0, 0, W, H);
+
+      // 제목
+      T(`👤 ${name} 플레이어 기록`, PAD, 70, 32, 800, C.white);
+      T(`집계 범위: ${scopeText} · ${dateText} · 작로그 (JangLog)`, PAD, 98, 14, 400, C.s400);
+      ctx.fillStyle = C.line; ctx.fillRect(PAD, 114, CW, 1);
+      T(`총 ${p.matchesCount}대국 (상세 ${p.detailedMatchesCount} / 점수직입력 ${p.scoreOnlyMatchesCount}) · 상세 기록 ${p.recordedHands}국`, PAD, 144, 13, 600, C.sky3);
+
+      // KPI 카드
+      kpis.forEach((k, i) => {
+        const col = i % 4, row = Math.floor(i / 4);
+        const x = PAD + col * (kpiW + GAP), y = KPI_Y + row * (KPI_H + GAP);
+        card(x, y, kpiW, KPI_H, 14, C.card, C.line);
+        T(k.label, x + 18, y + 27, 12.5, 500, C.s400);
+        T(k.value, x + 18, y + 60, 28, 800, k.color);
+        T(k.sub, x + 18, y + 80, 11.5, 400, C.s500);
+      });
+
+      // 좌측: 순위 분포
+      card(PAD, SEC_Y, LW, secH, 14, C.card, C.line);
+      T('🏅 대국 순위 분포 & 연대 지표', PAD + 18, SEC_Y + 34, 16, 700, C.amber3);
+      T(`총 ${p.matchesCount}대국 (상세 ${p.detailedMatchesCount} · 점수직입력 ${p.scoreOnlyMatchesCount})`, PAD + 18, SEC_Y + 56, 11.5, 400, C.s400);
+      rankRows.forEach((r, i) => {
+        const y0 = SEC_Y + 86 + i * 46;
+        T(r.label, PAD + 18, y0 + 12, 13, 600, C.s300);
+        T(`(${r.pct}%)`, PAD + LW - 18, y0 + 12, 13, 400, C.s400, 'right');
+        ctx.font = `400 13px ${FONT}`;
+        const pw = ctx.measureText(`(${r.pct}%)`).width;
+        T(`${r.cnt}회 `, PAD + LW - 18 - pw, y0 + 12, 13, 800, C.white, 'right');
+        const bx = PAD + 18, bw = LW - 36, by = y0 + 22;
+        card(bx, by, bw, 9, 4.5, C.cardAlt);
+        if (r.pct > 0) card(bx, by, Math.max(9, bw * r.pct / 100), 9, 4.5, r.color);
+      });
+      const dy = SEC_Y + 86 + 4 * 46 + 4;
+      ctx.fillStyle = C.line; ctx.fillRect(PAD + 18, dy, LW - 36, 1);
+      T('화료 스타일 세부 구성', PAD + 18, dy + 28, 12.5, 600, C.s400);
+      const sbW = (LW - 36 - 20) / 3;
+      styleBoxes.forEach((b, i) => {
+        const x = PAD + 18 + i * (sbW + 10), y = dy + 40;
+        card(x, y, sbW, 60, 10, C.cardAlt, C.line);
+        T(b.label, x + sbW / 2, y + 22, 11, 500, C.s400, 'center');
+        T(b.value, x + sbW / 2, y + 45, 15, 800, b.color, 'center');
+      });
+
+      // 우측: 역 도감
+      card(RX, SEC_Y, RW, secH, 14, C.card, C.line);
+      T('🀄 플레이어 달성 역(Yaku) 도감 & 최다 화료 역', RX + 18, SEC_Y + 34, 16, 700, C.emerald3);
+      T('이 플레이어가 화료할 때 성립시킨 모든 역의 횟수와 비중', RX + 18, SEC_Y + 56, 11.5, 400, C.s400);
+      const badge = `${yakuEntries.length}종 역 달성`;
+      ctx.font = `700 12px ${FONT}`;
+      const bdW = ctx.measureText(badge).width + 26;
+      card(RX + RW - 18 - bdW, SEC_Y + 16, bdW, 26, 13, 'rgba(16,185,129,0.18)', 'rgba(16,185,129,0.45)');
+      T(badge, RX + RW - 18 - bdW / 2, SEC_Y + 34, 12, 700, C.emerald3, 'center');
+
+      const gy = SEC_Y + 74;
+      if (yakuEntries.length === 0) {
+        T('아직 기록된 화료 역이 없습니다.', RX + RW / 2, gy + 40, 13, 500, C.s500, 'center');
+      } else {
+        yakuEntries.forEach(([yn, cnt], i) => {
+          const col = i % YCOLS, row = Math.floor(i / YCOLS);
+          const x = RX + 18 + col * (yW + YGAP), y = gy + row * (YH + YGAP);
+          card(x, y, yW, YH, 11, C.cardAlt, i < 3 ? 'rgba(16,185,129,0.45)' : C.line);
+          const pct = p.wins > 0 ? Math.round((cnt / p.wins) * 100) : 0;
+          ctx.font = `700 13.5px ${FONT}`;
+          const label = fit(ctx, `${i + 1}. ${yn}`, yW - 24 - 52);
+          T(label, x + 12, y + 23, 13.5, 700, i === 0 ? C.amber3 : C.white);
+          T(`화료 중 ${pct}%`, x + 12, y + 41, 11, 400, C.s400);
+          const cw = `${cnt}회`;
+          ctx.font = `800 12.5px ${FONT}`;
+          const pw = ctx.measureText(cw).width + 18;
+          card(x + yW - 10 - pw, y + 15, pw, 24, 7, 'rgba(16,185,129,0.2)');
+          T(cw, x + yW - 10 - pw / 2, y + 32, 12.5, 800, C.emerald3, 'center');
+        });
+      }
+
+      // 최고 타점 손패 배너
+      const by2 = gy + yGridH + 16;
+      card(RX + 18, by2, RW - 36, bestH, 12, C.cardAlt, C.line);
+      bestLines.forEach((line, li) => {
+        line.forEach(piece => {
+          T(piece.t, RX + 18 + 14 + piece.x, by2 + 12 + 14 + li * BEST_LH, 12.5, piece.w, piece.c);
+        });
+      });
+
+      return canvas;
+    }
+
+    // 선택한 플레이어의 기록을 이미지(PNG)로 저장
+    async function exportPlayerProfileImage() {
+      const name = state.selectedProfileName;
+      const scopeSel = document.getElementById('select-player-scope');
+      const statsMap = computeAggregatedPlayerStats(scopeSel.value || 'all');
+      const p = statsMap[name];
+      if (!name || !p) {
+        showToast('⚠️ 이미지로 저장할 플레이어를 먼저 선택해 주세요.');
+        return;
+      }
+      showToast('📷 이미지를 만드는 중입니다...');
+      try {
+        if (document.fonts && document.fonts.load) {
+          await Promise.all([400, 500, 600, 700, 800].map(w => document.fonts.load(`${w} 16px "Noto Sans KR"`).catch(() => [])));
+          await document.fonts.ready;
+        }
+        const scopeText = scopeSel.options[scopeSel.selectedIndex].text;
+        const canvas = buildPlayerProfileCanvas(name, p, scopeText, new Date().toLocaleDateString());
+        const safeName = name.replace(/[\\/:*?"<>|]+/g, '_').trim() || 'player';
+        const link = document.createElement('a');
+        link.download = `${safeName}_플레이어기록_${new Date().toISOString().slice(0, 10)}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        showToast(`📷 ${name} 플레이어 기록 이미지가 저장되었습니다!`);
+      } catch (err) {
+        console.error('플레이어 이미지 생성 오류:', err);
+        showToast('❌ 이미지 생성 중 오류가 발생했습니다.');
+      }
+    }
+
+    // ===== 대국 결과 공유 (Web Share API → 휴대폰 공유 창에서 카카오톡 선택) =====
+    window.shareCtx = { file: null, text: '', title: '', previewUrl: null, token: 0 };
+
+    function buildMatchShareText(arch, title) {
+      const lines = [`🀄 ${title}`];
+      if (arch.dateStr) lines.push(arch.dateStr);
+      lines.push('');
+      (arch.standings || []).forEach(st => {
+        lines.push(`${st.rank}위 ${st.name}  ${Number(st.score).toLocaleString()}점 (${st.finalPt >= 0 ? '+' : ''}${st.finalPt}pt)`);
+      });
+      lines.push('', '작로그 (JangLog)');
+      return lines.join('\n');
+    }
+
+    function closeShareModal() {
+      const c = window.shareCtx;
+      c.token++;
+      if (c.previewUrl) { URL.revokeObjectURL(c.previewUrl); c.previewUrl = null; }
+      c.file = null;
+      document.getElementById('modal-share').classList.add('hidden');
+    }
+
+    async function openShareModal(archId) {
+      const arch = (state.archives || []).find(a => a.id === archId);
+      if (!arch) {
+        showToast('⚠️ 공유할 아카이브 대국을 찾을 수 없습니다.');
+        return;
+      }
+      const c = window.shareCtx;
+      const token = ++c.token;
+      if (c.previewUrl) { URL.revokeObjectURL(c.previewUrl); c.previewUrl = null; }
+      c.file = null;
+      c.title = (arch.memo || '').trim() || '대국 결과';
+      c.text = buildMatchShareText(arch, c.title);
+
+      const nativeBtn = document.getElementById('btn-share-native');
+      const dlBtn = document.getElementById('btn-share-download');
+      const imgEl = document.getElementById('share-preview-img');
+      const loadingEl = document.getElementById('share-preview-loading');
+      const statusEl = document.getElementById('share-status');
+      imgEl.classList.add('hidden');
+      loadingEl.classList.remove('hidden');
+      loadingEl.textContent = '🖼️ 결과 이미지를 준비하는 중입니다...';
+      statusEl.textContent = '';
+      nativeBtn.disabled = true;
+      dlBtn.disabled = true;
+      nativeBtn.classList.remove('hidden');
+      document.getElementById('share-text-preview').textContent = c.text;
+      document.getElementById('modal-share').classList.remove('hidden');
+
+      try {
+        // 공유 버튼을 누르는 순간 바로 공유 창이 열리도록 이미지를 미리 만들어 둠
+        const canvas = await exportMatchSummaryImage(c.title, archId, 'canvas');
+        if (token !== c.token) return; // 그 사이 창이 닫힘
+        if (!canvas) throw new Error('canvas 생성 실패');
+        const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
+        if (!blob) throw new Error('이미지 변환 실패');
+        if (token !== c.token) return;
+
+        const safeName = c.title.replace(/[\\/:*?"<>|]+/g, '_').trim() || 'janglog_match';
+        c.file = new File([blob], `${safeName}.png`, { type: 'image/png' });
+        c.previewUrl = URL.createObjectURL(blob);
+        imgEl.src = c.previewUrl;
+        imgEl.classList.remove('hidden');
+        loadingEl.classList.add('hidden');
+        dlBtn.disabled = false;
+
+        const canShareFile = !!(navigator.canShare && navigator.canShare({ files: [c.file] }));
+        if (canShareFile) {
+          nativeBtn.textContent = '📤 이미지 공유하기 (카카오톡 등 선택)';
+          nativeBtn.disabled = false;
+          statusEl.textContent = '버튼을 누르면 공유 창이 열립니다. 카카오톡을 선택한 뒤 보낼 대화방을 고르세요.';
+        } else if (navigator.share) {
+          nativeBtn.textContent = '📤 텍스트로 공유하기 (카카오톡 등 선택)';
+          nativeBtn.disabled = false;
+          statusEl.textContent = '이 브라우저는 이미지 공유를 지원하지 않아 요약 텍스트로 공유합니다. 이미지는 저장 후 카카오톡에 직접 첨부해 주세요.';
+        } else {
+          nativeBtn.classList.add('hidden');
+          statusEl.textContent = '이 환경(주로 PC)에서는 공유 창을 지원하지 않습니다. 이미지를 저장하거나 요약 텍스트를 복사해 카카오톡에 붙여넣어 주세요.';
+        }
+      } catch (err) {
+        console.error('공유 이미지 준비 오류:', err);
+        if (token !== c.token) return;
+        loadingEl.textContent = '❌ 이미지를 만들지 못했습니다.';
+        statusEl.textContent = '요약 텍스트 복사 또는 공유(텍스트)는 계속 사용할 수 있습니다.';
+        if (navigator.share) {
+          nativeBtn.textContent = '📤 텍스트로 공유하기 (카카오톡 등 선택)';
+          nativeBtn.disabled = false;
+        } else {
+          nativeBtn.classList.add('hidden');
+        }
+      }
+    }
+    window.openShareModal = openShareModal;
+
     function openFinalScoreModal() {
       const pCount = getPlayerCount();
       const expectedSum = pCount * getStartingScore();
@@ -4540,6 +5008,8 @@
       } else {
         renderAll();
       }
+      // 첫 화면은 항상 '월별 & 역대 기록'
+      switchTab('monthly');
 
       if (supabaseClient) {
         supabaseClient
@@ -4724,25 +5194,86 @@
 
       document.getElementById('select-player-scope').addEventListener('change', renderPlayerProfileTab);
       document.getElementById('input-player-search').addEventListener('input', renderPlayerProfileTab);
+      document.getElementById('btn-player-save-image').addEventListener('click', exportPlayerProfileImage);
 
       document.getElementById('btn-banner-view-stats').addEventListener('click', () => switchTab('stats'));
-      document.getElementById('btn-banner-new-match').addEventListener('click', () => requireDeleteAuth(resetNewMatch));
-
-      document.getElementById('btn-download-html').addEventListener('click', downloadHtmlFile);
+      document.getElementById('btn-banner-new-match').addEventListener('click', () => requireDeleteAuth(() => resetNewMatch()));
 
       const archiveSaveModal = document.getElementById('modal-archive-save');
       document.getElementById('btn-archive-current').addEventListener('click', () => {
         requireAdminAuth(() => {
+          document.getElementById('archive-save-title').textContent = '💾 현재 대국 아카이브 저장';
+          document.getElementById('archive-save-reason').classList.add('hidden');
+          window.archiveSaveAfter = null;
+          window.archiveSaveShare = false;
           document.getElementById('input-archive-save-memo').value = `대국 세션 (${new Date().toLocaleDateString()})`;
           archiveSaveModal.classList.remove('hidden');
         });
       });
-      document.getElementById('btn-close-archive-save').addEventListener('click', () => archiveSaveModal.classList.add('hidden'));
-      document.getElementById('btn-cancel-archive-save').addEventListener('click', () => archiveSaveModal.classList.add('hidden'));
+      const closeArchiveSaveModal = () => {
+        window.archiveSaveAfter = null; // 취소 시 후속 동작(새 대국 초기화 등)도 중단
+        window.archiveSaveShare = false;
+        archiveSaveModal.classList.add('hidden');
+        renderAll();
+      };
+      document.getElementById('btn-close-archive-save').addEventListener('click', closeArchiveSaveModal);
+      document.getElementById('btn-cancel-archive-save').addEventListener('click', closeArchiveSaveModal);
       document.getElementById('btn-confirm-archive-save').addEventListener('click', () => {
         const val = document.getElementById('input-archive-save-memo').value.trim() || '대국 아카이브';
+        const afterSave = window.archiveSaveAfter;
+        const shareAfter = window.archiveSaveShare;
+        window.archiveSaveAfter = null;
+        window.archiveSaveShare = false;
         archiveSaveModal.classList.add('hidden');
-        archiveCurrentMatch(val);
+        const newArchId = archiveCurrentMatch(val);
+        if (typeof afterSave === 'function') afterSave();
+        else if (shareAfter && newArchId) openShareModal(newArchId);
+      });
+      document.getElementById('input-archive-save-memo').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') document.getElementById('btn-confirm-archive-save').click();
+      });
+      document.getElementById('btn-banner-archive-save').addEventListener('click', () => requestAutoArchive('banner'));
+
+      // 대국 결과 공유 모달
+      document.getElementById('btn-close-share').addEventListener('click', closeShareModal);
+      document.getElementById('btn-share-native').addEventListener('click', async () => {
+        const c = window.shareCtx;
+        try {
+          if (c.file && navigator.canShare && navigator.canShare({ files: [c.file] })) {
+            await navigator.share({ files: [c.file], title: c.title, text: c.text });
+          } else {
+            await navigator.share({ title: c.title, text: c.text });
+          }
+        } catch (err) {
+          if (err && err.name === 'AbortError') return; // 사용자가 공유 창을 닫음
+          console.error('공유 실패:', err);
+          showToast('❌ 공유에 실패했습니다. 이미지를 저장한 뒤 카카오톡에 직접 첨부해 주세요.');
+        }
+      });
+      document.getElementById('btn-share-download').addEventListener('click', () => {
+        const c = window.shareCtx;
+        if (!c.file) return;
+        const url = URL.createObjectURL(c.file);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = c.file.name;
+        link.click();
+        setTimeout(() => URL.revokeObjectURL(url), 2000);
+        showToast('📷 결과 이미지가 저장되었습니다!');
+      });
+      document.getElementById('btn-share-copytext').addEventListener('click', async () => {
+        const text = window.shareCtx.text;
+        try {
+          await navigator.clipboard.writeText(text);
+        } catch (e) {
+          const ta = document.createElement('textarea');
+          ta.value = text;
+          document.body.appendChild(ta);
+          ta.select();
+          try { document.execCommand('copy'); } catch (e2) {}
+          document.body.removeChild(ta);
+        }
+        showToast('📋 요약 텍스트가 복사되었습니다!');
       });
 
       document.getElementById('btn-clear-archive').addEventListener('click', () => {
@@ -4757,6 +5288,9 @@
       const archiveModal = document.getElementById('modal-archive-detail');
       document.getElementById('btn-close-archive-modal').addEventListener('click', () => archiveModal.classList.add('hidden'));
       document.getElementById('btn-close-archive-detail').addEventListener('click', () => archiveModal.classList.add('hidden'));
+      document.getElementById('btn-archive-detail-share').addEventListener('click', () => {
+        if (state.viewingArchiveId) openShareModal(state.viewingArchiveId);
+      });
       document.getElementById('btn-archive-detail-save-image').addEventListener('click', () => {
         if (state.viewingArchiveId) window.openArchiveImageSave(state.viewingArchiveId);
       });
@@ -4771,6 +5305,7 @@
           state.gameMode = arch.gameMode || state.gameMode;
           state.umaProfile = arch.umaProfile || state.umaProfile;
           state.isGameOver = false;
+          state.pendingArchive = false;
           archiveModal.classList.add('hidden');
           saveToStorage();
           renderAll();
@@ -4838,11 +5373,12 @@
         }
         const memoVal = document.getElementById('input-final-score-memo').value.trim() || `최종 점수 마감 대국 (${new Date().toLocaleDateString()})`;
         state.isGameOver = true;
-        archiveCurrentMatch(memoVal, state.history.length === 0 ? 'score_only' : 'detailed');
+        const finishedArchId = archiveCurrentMatch(memoVal, state.history.length === 0 ? 'score_only' : 'detailed');
         finalScoreModal.classList.add('hidden');
         saveToStorage();
         renderAll();
         switchTab('stats');
+        if (finishedArchId) openShareModal(finishedArchId);
       });
 
       const syncBoardModal = document.getElementById('modal-sync-board');
@@ -5053,7 +5589,7 @@
         });
       });
       document.getElementById('btn-load-demo').addEventListener('click', () => requireAdminAuth(loadSampleMatch));
-      document.getElementById('btn-reset-match').addEventListener('click', () => requireDeleteAuth(resetNewMatch));
+      document.getElementById('btn-reset-match').addEventListener('click', () => requireDeleteAuth(() => resetNewMatch()));
 
       const modal = document.getElementById('modal-settings');
       const openSettings = () => {
@@ -5102,35 +5638,6 @@
         }
         modal.classList.add('hidden');
         showToast('⚙️ 작혼 룰 설정이 적용되었습니다.');
-      });
-      document.getElementById('btn-export-summary').addEventListener('click', () => {
-        const standings = calculateMajsoulStandings();
-        let lines = [`[작로그 작혼식 대국 요약 - 총 ${state.history.length}국 진행]`];
-        standings.forEach(st => {
-          lines.push(`${st.rank}위: ${st.name} (${st.score.toLocaleString()}점) | 최종 Pt: ${st.finalPt >= 0 ? '+' : ''}${st.finalPt} pt (우마 ${st.uma})`);
-        });
-        lines.push('\n[주요 화료 내역]');
-        state.history.forEach(h => {
-          if (h.outcome === 'draw') {
-            lines.push(`- ${h.roundLabel} ${h.honba}본장: 유국`);
-          } else {
-            const wDesc = (h.winnerHands || []).map(wh => `${state.players[wh.winnerId]?.name}(${wh.isFuro ? '후로' : '멘젠'}, ${wh.tierName})`).join(' & ');
-            const how = h.outcome === 'ron' ? `${state.players[h.loserId]?.name}에게 론` : '쯔모';
-            lines.push(`- ${h.roundLabel} ${h.honba}본장: ${wDesc} (${how})`);
-          }
-        });
-        const text = lines.join('\n');
-        const ta = document.createElement('textarea');
-        ta.value = text;
-        document.body.appendChild(ta);
-        ta.select();
-        try {
-          document.execCommand('copy');
-          showToast('📋 최종 정산 및 요약이 클립보드에 복사되었습니다!');
-        } catch (err) {
-          showToast('복사에 실패했습니다.');
-        }
-        document.body.removeChild(ta);
       });
       const imageTitleModal = document.getElementById('modal-image-title');
     const btnCloseImageTitle = document.getElementById('btn-close-image-title');
